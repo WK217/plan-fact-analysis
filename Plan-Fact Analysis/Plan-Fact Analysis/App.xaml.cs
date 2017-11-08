@@ -11,7 +11,12 @@ namespace PlanFactAnalysis
         {
             base.OnStartup (e);
 
+            View.MainView mainView = new View.MainView ( )
+            {
+                DataContext = new ViewModel.MainViewModel ( )
+            };
 
+            mainView.Show ( );
         }
     }
 }
