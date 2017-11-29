@@ -3,14 +3,14 @@
     /// <summary>
     /// Центр финансовой ответственности (ЦФО).
     /// </summary>
-    public sealed class ResponsibilityCentre
+    public sealed class ResponsibilityCenter
     {
         /// <summary>
         /// Название ЦФО.
         /// </summary>
         public string Name { get; set; }
 
-        public ResponsibilityCentre (string name)
+        public ResponsibilityCenter (string name)
         {
             Name = name;
         }

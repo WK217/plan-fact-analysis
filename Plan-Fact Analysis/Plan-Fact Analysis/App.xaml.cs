@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using PlanFactAnalysis.Model;
+using System.Windows;
 
 namespace PlanFactAnalysis
 {
@@ -13,7 +14,7 @@ namespace PlanFactAnalysis
 
             View.MainView mainView = new View.MainView ( )
             {
-                DataContext = new ViewModel.MainViewModel ( )
+                DataContext = new ViewModel.MainViewModel (new FileManager ( ).GetConfiguration ( ))
             };
 
             mainView.Show ( );

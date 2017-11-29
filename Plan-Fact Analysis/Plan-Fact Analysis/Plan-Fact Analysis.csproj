@@ -78,19 +78,41 @@
     </Compile>
     <Compile Include="Model\ActualOperation.cs" />
     <Compile Include="Model\BudgetItem.cs" />
+    <Compile Include="Model\Configuration.cs" />
+    <Compile Include="Model\FileManager.cs" />
+    <Compile Include="Model\IOperationInfo.cs" />
+    <Compile Include="Model\MeasurementUnit.cs" />
     <Compile Include="Model\Operation.cs" />
-    <Compile Include="Model\PlannedOperation.cs" />
-    <Compile Include="Model\ResponsibilityCentre.cs" />
+    <Compile Include="Model\PlannedOperationCore.cs" />
+    <Compile Include="Model\PlannedOperationScenario.cs" />
+    <Compile Include="Model\ResponsibilityCenter.cs" />
     <Compile Include="Model\Scenario.cs" />
+    <Compile Include="Model\User.cs" />
+    <Compile Include="Model\UserRole.cs" />
+    <Compile Include="ViewModel\ActualOperationViewModel.cs" />
+    <Compile Include="ViewModel\Collections\BudgetItemsCollectionViewModel.cs" />
+    <Compile Include="ViewModel\Collections\MeasurementUnitsCollectionViewModel.cs" />
+    <Compile Include="ViewModel\Collections\ResponsibilityCentersCollectionViewModel.cs" />
+    <Compile Include="ViewModel\Collections\ScenariosCollectionViewModel.cs" />
+    <Compile Include="ViewModel\PlanFact\ActualOperationComparisonViewModel.cs" />
+    <Compile Include="ViewModel\PlanFact\BudgetItemComparisonViewModel.cs" />
+    <Compile Include="ViewModel\BudgetItemViewModel.cs" />
     <Compile Include="ViewModel\FactRegistryViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
-    <Compile Include="ViewModel\PlanFactTableViewModel.cs" />
+    <Compile Include="ViewModel\MeasurementUnitViewModel.cs" />
+    <Compile Include="ViewModel\PlanFact\PlanFactTableViewModel.cs" />
+    <Compile Include="ViewModel\PlanFact\PlannedOperationComparisonViewModel.cs" />
+    <Compile Include="ViewModel\PlannedOperationScenarioViewModel.cs" />
+    <Compile Include="ViewModel\PlannedOperationViewModel.cs" />
     <Compile Include="ViewModel\PlanRegistryViewModel.cs" />
     <Compile Include="ViewModel\RelayCommand.cs" />
+    <Compile Include="ViewModel\ResponsibilityCenterViewModel.cs" />
+    <Compile Include="ViewModel\ScenarioViewModel.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="View\MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="View\PlanFactTableRowStyleSelector.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -122,6 +144,10 @@
   <ItemGroup />
   <ItemGroup>
     <Page Include="View\MainView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\PlanFactTableRowStyles.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
