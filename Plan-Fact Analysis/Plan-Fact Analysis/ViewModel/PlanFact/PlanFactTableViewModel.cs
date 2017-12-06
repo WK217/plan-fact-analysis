@@ -3,16 +3,20 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
 using System;
+using PlanFactAnalysis.Model;
 
-namespace PlanFactAnalysis.ViewModel.PlanFact
+namespace PlanFactAnalysis.ViewModel
 {
     [Magic]
-    internal sealed class PlanFactTableViewModel : ViewModelBase
+    internal sealed class PlanFactTableViewModel : SubViewModelBase<MainViewModel>
     {
         readonly PlanRegistryViewModel _planRegistry;
-        readonly FactRegistryViewModel _factRegistry;
+        readonly RegistryViewModel<ActualOperationViewModel, ActualOperation> _factRegistry;
 
-        public PlanFactTableViewModel (PlanRegistryViewModel planRegistry, FactRegistryViewModel factRegistry)
+        public PlanFactTableViewModel (PlanRegistryViewModel planRegistry,
+            RegistryViewModel<ActualOperationViewModel, ActualOperation> factRegistry,
+            MainViewModel context)
+            : base (context)
         {
             _planRegistry = planRegistry;
             _factRegistry = factRegistry;
@@ -24,9 +28,9 @@ namespace PlanFactAnalysis.ViewModel.PlanFact
         {
             ObservableCollection<object> items = new ObservableCollection<object> ( );
 
-            foreach (BudgetItemViewModel budgetItem in BudgetItemViewModel.Collection)
+            foreach (BudgetItemViewModel budgetItem in _context.BudgetItems.Items)
             {                
-                BudgetItemComparisonViewModel budgetItemComparison = new BudgetItemComparisonViewModel (this, budgetItem);
+                BudgetItemComparisonViewModel budgetItemComparison = new BudgetItemComparisonViewModel (this, budgetItem, _context);
 
                 if (budgetItemComparison.GetPlannedOperations().Count() > 0)
                     items.Add (budgetItemComparison);
@@ -48,7 +52,7 @@ namespace PlanFactAnalysis.ViewModel.PlanFact
                 }
             }
 
-            Items = CollectionViewSource.GetDefaultView (items);
+            ItemsCollectionView = CollectionViewSource.GetDefaultView (items);
 
             //Items.GroupDescriptions.Add (new PropertyGroupDescription (nameof (PlannedOperationComparisonViewModel.BudgetItem)));
             //Items.GroupDescriptions.Add (new PropertyGroupDescription (nameof (PlanFactComparisonViewModel.PlannedOperation)));
@@ -56,10 +60,10 @@ namespace PlanFactAnalysis.ViewModel.PlanFact
             //Items.SortDescriptions.Add (new SortDescription (nameof (PlanFactComparisonViewModel.BudgetItem), ListSortDirection.Ascending));
             //Items.SortDescriptions.Add (new SortDescription (nameof (PlanFactComparisonViewModel.PlannedOperation), ListSortDirection.Ascending));
 
-            RaisePropertyChanged (nameof (Items));
+            RaisePropertyChanged (nameof (ItemsCollectionView));
         }
 
-        public ICollectionView Items { get; set; }
+        public ICollectionView ItemsCollectionView { get; set; }
 
         public DateTime BeginDate { get; set; }
         public DateTime EndDate { get; set; }

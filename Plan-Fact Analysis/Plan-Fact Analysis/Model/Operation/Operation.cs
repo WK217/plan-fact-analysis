@@ -21,7 +21,7 @@
         public string Comment { get; set; }
 
         /// <summary>
-        /// Конструктор для денежных операций.
+        /// Конструктор.
         /// </summary>
         /// <param name="value">Показатель операции.</param>
         /// <param name="labourIntensity">Временные затраты (ч).</param>
@@ -29,6 +29,11 @@
         {
             Value = value;
             LabourIntensity = labourIntensity;
+        }
+
+        public Operation ( )
+        {
+
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using PlanFactAnalysis.ViewModel.PlanFact;
+﻿using PlanFactAnalysis.ViewModel;
 using System;
 using System.Windows;
 using System.Windows.Controls;

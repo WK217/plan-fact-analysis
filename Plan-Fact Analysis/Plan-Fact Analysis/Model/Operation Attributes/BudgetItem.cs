@@ -5,6 +5,8 @@
     /// </summary>
     public sealed class BudgetItem
     {
+        public static BudgetItem Default { get; set; }
+
         /// <summary>
         /// Название статьи бюджета.
         /// </summary>
@@ -14,6 +16,11 @@
         /// Единица измерения.
         /// </summary>
         public MeasurementUnit MeasurementUnit { get; set; }
+
+        public BudgetItem ( )
+        {
+            MeasurementUnit = MeasurementUnit.Default;
+        }
 
         public BudgetItem (string name, MeasurementUnit measurementUnit)
         {

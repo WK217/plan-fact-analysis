@@ -2,10 +2,10 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace PlanFactAnalysis.ViewModel.PlanFact
+namespace PlanFactAnalysis.ViewModel
 { 
     [Magic]
-    internal sealed class PlannedOperationComparisonViewModel: ViewModelBase
+    internal sealed class PlannedOperationComparisonViewModel: PropertyChangedBase
     {
         readonly PlannedOperationViewModel _plannedOperation;
         readonly ObservableCollection<ActualOperationViewModel> _actualOperations;

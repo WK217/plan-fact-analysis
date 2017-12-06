@@ -1,7 +1,7 @@
-﻿namespace PlanFactAnalysis.ViewModel.PlanFact
+﻿namespace PlanFactAnalysis.ViewModel
 {
     [Magic]
-    internal sealed class ActualOperationComparisonViewModel : ViewModelBase
+    internal sealed class ActualOperationComparisonViewModel : PropertyChangedBase
     {
         readonly ActualOperationViewModel _operation;
 

@@ -7,7 +7,7 @@ namespace PlanFactAnalysis.ViewModel
     internal sealed class RelayCommand : ICommand
     {
         readonly Action<object> _execute;
-        readonly Predicate<object> _canExecute;
+        public Predicate<object> CanExecutePredicate { get; set; }
 
         public RelayCommand (Action<object> execute)
             : this (execute, null)
@@ -21,13 +21,13 @@ namespace PlanFactAnalysis.ViewModel
                 throw new ArgumentNullException ("execute");
             else
                 _execute = execute;
-            _canExecute = canExecute;
+            CanExecutePredicate = canExecute;
         }
 
         [DebuggerStepThrough]
         public bool CanExecute (object parameter)
         {
-            return _canExecute == null ? true : _canExecute (parameter);
+            return CanExecutePredicate == null ? true : CanExecutePredicate (parameter);
         }
 
         public event EventHandler CanExecuteChanged

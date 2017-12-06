@@ -3,384 +3,987 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:sys="clr-namespace:System;assembly=mscorlib" xmlns:v="clr-namespace:PlanFactAnalysis.View"
         xmlns:vm="clr-namespace:PlanFactAnalysis.ViewModel" Title="План/факт-анализ"
-        Width="600" WindowState="Maximized"
-        mc:Ignorable="d">
+        Width="1600" Height="900"
+        WindowState="Maximized" mc:Ignorable="d">
     <!--  d:DataContext="{d:DesignInstance vm:MainViewModel}"  -->
 
     <Window.Resources>
-        <Style x:Key="defaultGrid" TargetType="{x:Type DataGrid}">
-            <Setter Property="AutoGenerateColumns" Value="False" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries />
 
-            <Setter Property="CellStyle">
-                <Setter.Value>
-                    <Style TargetType="{x:Type DataGridCell}">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="{x:Type DataGridCell}">
-                                    <Grid Background="{TemplateBinding Background}">
-                                        <ContentPresenter VerticalAlignment="Center" />
-                                    </Grid>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </Setter.Value>
-            </Setter>
+            <Style x:Key="RegistryGrid" TargetType="{x:Type DataGrid}">
+                <Setter Property="AutoGenerateColumns" Value="False" />
 
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="IsReadOnly" Value="True" />
-            <Setter Property="IsSynchronizedWithCurrentItem" Value="True" />
-            <Setter Property="ItemsSource" Value="{Binding Items}" />
-        </Style>
+                <Setter Property="CellStyle">
+                    <Setter.Value>
+                        <Style TargetType="{x:Type DataGridCell}">
+                            <Setter Property="Height" Value="25" />
 
-        <Style x:Key="numericCell" TargetType="{x:Type DataGridCell}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type DataGridCell}">
-                        <Grid Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                                        <Grid Background="{TemplateBinding Background}">
+                                            <ContentPresenter VerticalAlignment="Center" />
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Setter.Value>
+                </Setter>
 
-        <v:PlanFactTableRowStyleSelector x:Key="PlanFactTableRowStyleSelector" />
+                <Setter Property="ColumnHeaderStyle">
+                    <Setter.Value>
+                        <Style TargetType="{x:Type DataGridColumnHeader}">
+                            <Setter Property="HorizontalContentAlignment" Value="Center" />
+                        </Style>
+                    </Setter.Value>
+                </Setter>
+
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="IsReadOnly" Value="True" />
+                <Setter Property="IsSynchronizedWithCurrentItem" Value="True" />
+                <Setter Property="ItemsSource" Value="{Binding ItemsCollectionView}" />
+            </Style>
+
+            <Style x:Key="NumericCell" TargetType="{x:Type DataGridCell}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type DataGridCell}">
+                            <Grid Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="Field" TargetType="{x:Type TextBox}">
+                <Setter Property="BorderThickness" Value="0,0,0,1" />
+                <Setter Property="Padding" Value="2,0,1,2" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="FieldComboBox" TargetType="{x:Type ComboBox}">
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="FieldDatePicker" TargetType="{x:Type DatePicker}">
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="FieldLabel" TargetType="{x:Type TextBlock}">
+                <Setter Property="Margin" Value="0,0,10,3" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+
+            <v:PlanFactTableRowStyleSelector x:Key="PlanFactTableRowStyleSelector" />
+            <v:DescriptionConverter x:Key="DescriptionConverter" />
+        </ResourceDictionary>
     </Window.Resources>
 
-    <Grid>
-        <TabControl>
-            <TabItem DataContext="{Binding PlanRegistry}" Header="Регистр плана">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="auto" />
-                    </Grid.ColumnDefinitions>
+    <Grid TextBlock.FontSize="14">
+        <DockPanel>
+            <Menu DockPanel.Dock="Top" FontSize="14">
+                <MenuItem Header="Файл">
+                    <MenuItem Header="Экспортировать…" Command="{Binding ExportDatabaseCommand}" />
+                </MenuItem>
+            </Menu>
 
-                    <Grid.RowDefinitions>
-                        <RowDefinition />
-                        <RowDefinition Height="auto" />
-                    </Grid.RowDefinitions>
+            <TabControl Name="MainPanel" DockPanel.Dock="Top">
+                <TabControl.Style>
+                    <Style TargetType="{x:Type TabControl}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Authorization.Authorized}" Value="False">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <BooleanAnimationUsingKeyFrames Storyboard.TargetProperty="(TabControl.IsEnabled)" Duration="0:0:0.5">
+                                                <DiscreteBooleanKeyFrame KeyTime="0:0:0.5" Value="False" />
+                                            </BooleanAnimationUsingKeyFrames>
+                                            <DoubleAnimation Storyboard.TargetProperty="(TabControl.Opacity)" To="0.4" Duration="0:0:0.5" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
 
-                    <StackPanel>
-                        <StackPanel Margin="5" Orientation="Horizontal">
-                            <TextBlock Margin="5,0">Сценарий:</TextBlock>
+                                <DataTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <BooleanAnimationUsingKeyFrames BeginTime="0:0:3" Storyboard.TargetProperty="(TabControl.IsEnabled)" Duration="0:0:0.5">
+                                                <DiscreteBooleanKeyFrame KeyTime="0:0:0.5" Value="True" />
+                                            </BooleanAnimationUsingKeyFrames>
+                                            <DoubleAnimation BeginTime="0:0:3" Storyboard.TargetProperty="(TabControl.Opacity)" To="1.0" Duration="0:0:0.5" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TabControl.Style>
 
-                            <ComboBox ItemsSource="{Binding Source={x:Static vm:ScenarioViewModel.Collection}}" SelectedItem="{Binding SelectedScenario}" />
-                        </StackPanel>
+                <TabItem DataContext="{Binding PlanRegistry}" Header="Реестр плана">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition Height="auto" />
+                        </Grid.RowDefinitions>
 
-                        <DataGrid Style="{StaticResource defaultGrid}">
+                        <DataGrid FontSize="14" Style="{StaticResource RegistryGrid}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Width="20*" Binding="{Binding Name}" Header="Название" />
+                                <DataGridTextColumn Width="18*" Binding="{Binding Name}" Header="Название" />
 
                                 <DataGridTemplateColumn Width="11*" Header="Сценарий">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ComboBox DisplayMemberPath="ScenarioObject.Name" IsSynchronizedWithCurrentItem="True" ItemsSource="{Binding Scenarios}" />
+                                            <ComboBox DisplayMemberPath="ScenarioObject.Name" IsSynchronizedWithCurrentItem="True" ItemsSource="{Binding ScenariosRegistryCollectionView}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTextColumn Width="9*" Binding="{Binding Value}" CellStyle="{StaticResource numericCell}" Header="Значение" />
-                                <DataGridTextColumn Width="8*" Binding="{Binding LabourIntensity}" CellStyle="{StaticResource numericCell}" Header="Трудоёмкость (ч.)" />
-                                <DataGridTextColumn Width="8*" Binding="{Binding BeginDate, StringFormat={}{0: dd.MM.yyyy}}" Header="Дата начала" />
-                                <DataGridTextColumn Width="8*" Binding="{Binding EndDate, StringFormat={}{0: dd.MM.yyyy}}" Header="Дата окончания" />
+                                <DataGridTextColumn Width="8*" Binding="{Binding Value}" CellStyle="{StaticResource NumericCell}" Header="Значение" />
+                                <DataGridTextColumn Width="9*" Binding="{Binding LabourIntensity}" CellStyle="{StaticResource NumericCell}" Header="Трудоёмкость (ч.)" />
+                                <DataGridTextColumn Width="9*" Binding="{Binding BeginDate, StringFormat={}{0: dd.MM.yyyy}}" Header="Дата начала" />
+                                <DataGridTextColumn Width="9*" Binding="{Binding EndDate, StringFormat={}{0: dd.MM.yyyy}}" Header="Дата окончания" />
                                 <DataGridTextColumn Width="18*" Binding="{Binding BudgetItem.FullName}" Header="Статья бюджета" />
                                 <DataGridTextColumn Width="18*" Binding="{Binding ResponsibilityCenter.Name}" Header="ЦФО" />
                             </DataGrid.Columns>
                         </DataGrid>
-                    </StackPanel>
 
-                    <Grid Grid.Column="1">
+                        <Grid Grid.Row="1" Margin="5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="350" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="350" />
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="600" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock HorizontalAlignment="Left" FontSize="14" TextWrapping="Wrap">
+                                    <Run FontSize="18" FontWeight="Bold">Информация</Run>
+                                    <LineBreak />
+                                    <Run>При формировании план/факт-таблицы в расчёт плановых значений идёт значение, соответствующее выбранному в данный момент сценарию в таблице.</Run>
+                                </TextBlock>
+
+                                <Grid Margin="0,7,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150*" />
+                                        <ColumnDefinition Width="200*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock VerticalAlignment="Center" TextWrapping="Wrap">Чтобы массово сменить сценарий во всех запланированных операциях, воспользуйтесь переключателем.</TextBlock>
+
+                                    <StackPanel Grid.Column="1" Width="160" Margin="0,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock HorizontalAlignment="Center">Сценарий:</TextBlock>
+                                        <ComboBox ItemsSource="{Binding Path=DataContext.Scenarios.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}" SelectedItem="{Binding SelectedScenario}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <!--#region Добавление новой записи-->
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
+
+                                <Grid DataContext="{Binding NewItem}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="auto" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                    <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}">Дата начала:</TextBlock>
+                                    <DatePicker Grid.Row="1" Grid.Column="1" SelectedDate="{Binding BeginDate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+
+                                    <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Дата окончания:</TextBlock>
+                                    <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding EndDate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+
+                                    <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}">Статья бюджета:</TextBlock>
+                                    <ComboBox Grid.Row="3" Grid.Column="1"
+                                              ItemsSource="{Binding Path=DataContext.BudgetItems.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}"
+                                              SelectedItem="{Binding BudgetItem}"
+                                              Style="{StaticResource FieldComboBox}" />
+
+                                    <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}">ЦФО:</TextBlock>
+                                    <ComboBox Grid.Row="4" Grid.Column="1"
+                                              ItemsSource="{Binding Path=DataContext.ResponsibilityCenters.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}"
+                                              SelectedItem="{Binding ResponsibilityCenter}"
+                                              Style="{StaticResource FieldComboBox}" />
+                                </Grid>
+
+                                <Button Margin="0,5" Padding="5,2" HorizontalAlignment="Center" Command="{Binding AddItemCommand}">
+                                    Добавить запись
+                                </Button>
+                            </StackPanel>
+                            <!--#endregion-->
+
+                            <!--#region Редактирование выбранной записи-->
+                            <StackPanel Grid.Column="5">
+                                <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Редактирование выбранной записи</TextBlock>
+
+                                <Grid DataContext="{Binding ItemsCollectionView.CurrentItem}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="auto" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="auto" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                    <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}">Дата начала:</TextBlock>
+                                    <DatePicker Grid.Row="1" Grid.Column="1" SelectedDate="{Binding BeginDate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+
+                                    <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Дата окончания:</TextBlock>
+                                    <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding EndDate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+
+                                    <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}">Статья бюджета:</TextBlock>
+                                    <ComboBox Grid.Row="3" Grid.Column="1"
+                                              ItemsSource="{Binding Path=DataContext.BudgetItems.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}"
+                                              SelectedItem="{Binding BudgetItem}"
+                                              Style="{StaticResource FieldComboBox}" />
+
+                                    <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}">ЦФО:</TextBlock>
+                                    <ComboBox Grid.Row="4" Grid.Column="1"
+                                              ItemsSource="{Binding Path=DataContext.ResponsibilityCenters.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}"
+                                              SelectedItem="{Binding ResponsibilityCenter}"
+                                              Style="{StaticResource FieldComboBox}" />
+
+                                    <TextBlock Grid.Column="3" Style="{StaticResource FieldLabel}">Сценарий:</TextBlock>
+                                    <ComboBox Grid.Column="4" ItemsSource="{Binding Path=DataContext.Scenarios.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}" SelectedItem="{Binding SelectedScenarioObject}" Style="{StaticResource FieldComboBox}" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="3" Style="{StaticResource FieldLabel}">Значение:</TextBlock>
+                                    <TextBox Grid.Row="1" Grid.Column="4" Style="{StaticResource Field}" Text="{Binding SelectedPlannedOperationScenario.Value, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <TextBlock Grid.Row="2" Grid.Column="3" Style="{StaticResource FieldLabel}">Трудоёмкость (ч.):</TextBlock>
+                                    <TextBox Grid.Row="2" Grid.Column="4" Style="{StaticResource Field}" Text="{Binding SelectedPlannedOperationScenario.LabourIntensity, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <StackPanel Grid.Row="3" Grid.RowSpan="2"
+                                                Grid.Column="3" Grid.ColumnSpan="2"
+                                                HorizontalAlignment="Center" VerticalAlignment="Top"
+                                                Orientation="Horizontal">
+                                        <Button Margin="5" Padding="5,2" Command="{Binding ScenariosRegistry.AddItemCommand}">
+                                            Добавить сценарий
+                                        </Button>
+
+                                        <Button Margin="5" Padding="5,2" Command="{Binding ScenariosRegistry.RemoveItemCommand}">
+                                            Удалить сценарий
+                                        </Button>
+                                    </StackPanel>
+
+                                    <Button Grid.Row="5" Grid.ColumnSpan="2"
+                                            Margin="5" Padding="5,2"
+                                            HorizontalAlignment="Center"
+                                            Command="{Binding Path=DataContext.PlanRegistry.RemoveItemCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}">
+                                        Удалить запись
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                            <!--#endregion-->
+                        </Grid>
+                    </Grid>
+                </TabItem>
+
+                <TabItem DataContext="{Binding FactRegistry}" Header="Реестр факта">
+                    <Grid Margin="10">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
+                            <RowDefinition />
                             <RowDefinition Height="auto" />
                         </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto" />
-                            <ColumnDefinition />
-                        </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.ColumnSpan="2" Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
+                        <DataGrid Style="{StaticResource RegistryGrid}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Width="25*" Binding="{Binding Name}" Header="Название" />
+                                <DataGridTextColumn Width="25*" Binding="{Binding PlannedOperation}" Header="Соотв. плановая операция" />
+                                <DataGridTextColumn Width="8*" Binding="{Binding Date, StringFormat={}{0: dd.MM.yyyy}}" Header="Дата" />
+                                <DataGridTextColumn Width="8*" Binding="{Binding Value}" CellStyle="{StaticResource NumericCell}" Header="Значение" />
+                                <DataGridTextColumn Width="10*" Binding="{Binding LabourIntensity}" CellStyle="{StaticResource NumericCell}" Header="Трудоёмкость (ч.)" />
+                                <DataGridTextColumn Width="16*" Binding="{Binding BudgetItem.Name}" Header="Статья бюджета" />
+                                <DataGridTextColumn Width="8*" Binding="{Binding ResponsibilityCenter.Name}" Header="ЦФО" />
+                            </DataGrid.Columns>
+                        </DataGrid>
 
-                        <TextBlock Grid.Row="1" Margin="5,0">Название:</TextBlock>
-                        <TextBox Grid.Row="1" Grid.Column="1" />
+                        <Grid Grid.Row="1" Margin="5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="350" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="350" />
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="600" />
+                            </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Row="2" Margin="5,0" VerticalAlignment="Center">Сценарий:</TextBlock>
-                        <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Source={x:Static vm:ScenarioViewModel.Collection}}" />
+                            <!--#region Добавление новой записи-->
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
 
-                        <TextBlock Grid.Row="3" Margin="5,0">Значение:</TextBlock>
-                        <TextBox Grid.Row="3" Grid.Column="1" />
+                                <Grid DataContext="{Binding NewItem}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="auto" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Row="4" Margin="5,0">Объём (физ.):</TextBlock>
-                        <TextBox Grid.Row="4" Grid.Column="1" />
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                    </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="5" Margin="5,0">Трудоёмкость (ч.):</TextBlock>
-                        <TextBox Grid.Row="5" Grid.Column="1" />
+                                    <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                    <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
-                        <Button Grid.Row="6" Grid.ColumnSpan="2"
-                                Margin="0,5" Padding="5,2"
-                                HorizontalAlignment="Center">
-                            Добавить запись
-                        </Button>
+                                    <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}">Соотв. плановая операция:</TextBlock>
+                                    <ComboBox Grid.Row="1" Grid.Column="1"
+                                              ItemsSource="{Binding Path=DataContext.PlanRegistry.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}"
+                                              SelectedItem="{Binding PlannedOperation}"
+                                              Style="{StaticResource FieldComboBox}" />
+
+                                    <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Дата:</TextBlock>
+                                    <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+
+                                    <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}">Значение:</TextBlock>
+                                    <TextBox Grid.Row="3" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}">Трудоёмкость (ч.):</TextBlock>
+                                    <TextBox Grid.Row="4" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+
+                                <Button Margin="0,5" Padding="5,2" HorizontalAlignment="Center" Command="{Binding AddItemCommand}">
+                                    Добавить запись
+                                </Button>
+                            </StackPanel>
+                            <!--#endregion-->
+
+                            <!--#region Редактирование выбранной записи-->
+                            <StackPanel Grid.Column="5">
+                                <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Редактирование выбранной записи</TextBlock>
+
+                                <Grid DataContext="{Binding ItemsCollectionView.CurrentItem}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="auto" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="auto" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="30" />
+                                        <RowDefinition Height="auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                    <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}">Соотв. плановая операция:</TextBlock>
+                                    <ComboBox Grid.Row="1" Grid.Column="1"
+                                              ItemsSource="{Binding Path=DataContext.PlanRegistry.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}"
+                                              SelectedItem="{Binding PlannedOperation}"
+                                              Style="{StaticResource FieldComboBox}" />
+
+                                    <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Дата:</TextBlock>
+                                    <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+
+                                    <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}">Значение:</TextBlock>
+                                    <TextBox Grid.Row="3" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}">Трудоёмкость (ч.):</TextBlock>
+                                    <TextBox Grid.Row="4" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <TextBlock Grid.Column="3" Style="{StaticResource FieldLabel}">Статья бюджета:</TextBlock>
+                                    <TextBox Grid.Column="4" IsReadOnly="True" Style="{StaticResource Field}" Text="{Binding BudgetItem.Name}" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="3" Style="{StaticResource FieldLabel}">ЦФО:</TextBlock>
+                                    <TextBox Grid.Row="1" Grid.Column="4"
+                                             IsReadOnly="True"
+                                             Style="{StaticResource Field}"
+                                             Text="{Binding ResponsibilityCenter.Name}" />
+
+                                    <Button Grid.Row="5" Grid.ColumnSpan="2"
+                                            Margin="0,5" Padding="5,2"
+                                            HorizontalAlignment="Center"
+                                            Command="{Binding Path=DataContext.FactRegistry.RemoveItemCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}">
+                                        Удалить сценарий
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                            <!--#endregion-->
+                        </Grid>
                     </Grid>
-                </Grid>
-            </TabItem>
+                </TabItem>
 
-            <TabItem DataContext="{Binding FactRegistry}" Header="Регистр факта">
+                <TabItem DataContext="{Binding PlanFactTable}" Header="План/факт-таблица">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Margin="10" Orientation="Horizontal">
+                            <TextBlock Width="420" HorizontalAlignment="Left" FontSize="14" TextWrapping="Wrap">
+                                <Run FontSize="18" FontWeight="Bold">Информация</Run>
+                                <LineBreak />
+                                <Run>При расчёте итоговой план/факт-таблицы в расчёт идут только входящие в указанный временной промежуток операции.</Run>
+                            </TextBlock>
+
+                            <Grid Margin="0,0,20,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition Height="10" />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Margin="5,0" VerticalAlignment="Center">Начало планирования:</TextBlock>
+                                <DatePicker Grid.Column="1" SelectedDate="{Binding BeginDate}" />
+
+                                <TextBlock Grid.Row="2" Margin="5,0" VerticalAlignment="Center">Конец планирования:</TextBlock>
+                                <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding EndDate}" />
+                            </Grid>
+
+                            <Button Padding="5,3" VerticalAlignment="Center" Command="{Binding GenerateTableCommand}">Сформировать таблицу</Button>
+                        </StackPanel>
+
+                        <DataGrid Grid.Row="1" CanUserSortColumns="False" ItemContainerStyleSelector="{StaticResource PlanFactTableRowStyleSelector}" Style="{StaticResource RegistryGrid}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Width="20*" Binding="{Binding BudgetItem}" Header="Статья бюджета" />
+                                <DataGridTextColumn Width="16*" Binding="{Binding PlannedOperation.Name}" Header="Плановая операция" />
+                                <DataGridTextColumn Width="16*" Binding="{Binding ActualOperation.Name}" Header="Фактическая операция" />
+                                <DataGridTextColumn Width="12*" Binding="{Binding PlannedValue}" CellStyle="{StaticResource NumericCell}" Header="Плановое значение" />
+                                <DataGridTextColumn Width="12*" Binding="{Binding ActualValue}" CellStyle="{StaticResource NumericCell}" Header="Фактическое значение" />
+                                <DataGridTextColumn Width="12*" Binding="{Binding Deviation}" Header="Абсолютное отклонение" />
+                                <DataGridTextColumn Width="12*" Binding="{Binding ResponsibilityCenter}" Header="ЦФО" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="Справочники">
+                    <TabControl Margin="5">
+                        <TabItem DataContext="{Binding BudgetItems}" Header="Статьи бюджета">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition Height="auto" />
+                                </Grid.RowDefinitions>
+
+                                <DataGrid Style="{StaticResource RegistryGrid}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="Название" />
+                                        <DataGridTextColumn Width="*" Binding="{Binding MeasurementUnit}" Header="Единица измерения" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="350" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="350" />
+                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition Width="600" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!--#region Добавление новой записи-->
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
+
+                                        <Grid DataContext="{Binding NewItem}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="30" />
+                                                <RowDefinition Height="30" />
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                            <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                            <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}">Единица измерения:</TextBlock>
+                                            <ComboBox Grid.Row="1" Grid.Column="1"
+                                                      ItemsSource="{Binding Path=DataContext.MeasurementUnits.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}"
+                                                      SelectedItem="{Binding MeasurementUnit}"
+                                                      Style="{StaticResource FieldComboBox}" />
+                                        </Grid>
+
+                                        <Button Margin="0,5" Padding="5,2" HorizontalAlignment="Center" Command="{Binding AddItemCommand}">
+                                            Добавить запись
+                                        </Button>
+                                    </StackPanel>
+                                    <!--#endregion-->
+
+                                    <!--#region Редактирование выбранной записи-->
+                                    <StackPanel Grid.Column="5">
+                                        <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Редактирование выбранной записи</TextBlock>
+
+                                        <Grid DataContext="{Binding ItemsCollectionView.CurrentItem}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="30" />
+                                                <RowDefinition Height="30" />
+                                                <RowDefinition Height="auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                            <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                            <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}">Единица измерения:</TextBlock>
+                                            <ComboBox Grid.Row="1" Grid.Column="1"
+                                                      ItemsSource="{Binding Path=DataContext.MeasurementUnits.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}"
+                                                      SelectedItem="{Binding MeasurementUnit}"
+                                                      Style="{StaticResource FieldComboBox}" />
+
+                                            <Button Grid.Row="5" Grid.ColumnSpan="2"
+                                                    Margin="0,5" Padding="5,2"
+                                                    HorizontalAlignment="Center"
+                                                    Command="{Binding Path=DataContext.BudgetItems.RemoveItemCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}">
+                                                Удалить запись
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                    <!--#endregion-->
+                                </Grid>
+                            </Grid>
+                        </TabItem>
+
+                        <TabItem DataContext="{Binding ResponsibilityCenters}" Header="ЦФО">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition Height="auto" />
+                                </Grid.RowDefinitions>
+
+                                <DataGrid Style="{StaticResource RegistryGrid}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="Название" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="350" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="350" />
+                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition Width="600" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!--#region Добавление новой записи-->
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
+
+                                        <Grid DataContext="{Binding NewItem}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="30" />
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                            <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                        </Grid>
+
+                                        <Button Margin="0,5" Padding="5,2" HorizontalAlignment="Center" Command="{Binding AddItemCommand}">
+                                            Добавить запись
+                                        </Button>
+                                    </StackPanel>
+                                    <!--#endregion-->
+
+                                    <!--#region Редактирование выбранной записи-->
+                                    <StackPanel Grid.Column="5">
+                                        <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Редактирование выбранной записи</TextBlock>
+
+                                        <Grid DataContext="{Binding ItemsCollectionView.CurrentItem}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="30" />
+                                                <RowDefinition Height="auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                            <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                            <Button Grid.Row="5" Grid.ColumnSpan="2"
+                                                    Margin="0,5" Padding="5,2"
+                                                    HorizontalAlignment="Center"
+                                                    Command="{Binding Path=DataContext.ResponsibilityCenters.RemoveItemCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}">
+                                                Удалить запись
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                    <!--#endregion-->
+                                </Grid>
+                            </Grid>
+                        </TabItem>
+
+                        <TabItem DataContext="{Binding Scenarios}" Header="Сценарии">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition Height="auto" />
+                                </Grid.RowDefinitions>
+
+                                <DataGrid Style="{StaticResource RegistryGrid}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="Название" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="350" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="350" />
+                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition Width="600" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!--#region Добавление новой записи-->
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
+
+                                        <Grid DataContext="{Binding NewItem}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="30" />
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                            <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                        </Grid>
+
+                                        <Button Margin="0,5" Padding="5,2" HorizontalAlignment="Center" Command="{Binding AddItemCommand}">
+                                            Добавить запись
+                                        </Button>
+                                    </StackPanel>
+                                    <!--#endregion-->
+
+                                    <!--#region Редактирование выбранной записи-->
+                                    <StackPanel Grid.Column="5">
+                                        <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Редактирование выбранной записи</TextBlock>
+
+                                        <Grid DataContext="{Binding ItemsCollectionView.CurrentItem}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="30" />
+                                                <RowDefinition Height="auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                            <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                            <Button Grid.Row="5" Grid.ColumnSpan="2"
+                                                    Margin="0,5" Padding="5,2"
+                                                    HorizontalAlignment="Center"
+                                                    Command="{Binding Path=DataContext.Scenarios.RemoveItemCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}">
+                                                Удалить запись
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                    <!--#endregion-->
+                                </Grid>
+                            </Grid>
+                        </TabItem>
+
+                        <TabItem DataContext="{Binding MeasurementUnits}" Header="Единицы измерения">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition Height="auto" />
+                                </Grid.RowDefinitions>
+
+                                <DataGrid Style="{StaticResource RegistryGrid}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="Название" />
+                                        <DataGridTextColumn Width="*" Binding="{Binding Designation}" Header="Обозначение" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="350" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="350" />
+                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition Width="600" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!--#region Добавление новой записи-->
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
+
+                                        <Grid DataContext="{Binding NewItem}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="30" />
+                                                <RowDefinition Height="30" />
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                            <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                            <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}">Обозначение:</TextBlock>
+                                            <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Designation, UpdateSourceTrigger=PropertyChanged}" />
+                                        </Grid>
+
+                                        <Button Margin="0,5" Padding="5,2" HorizontalAlignment="Center" Command="{Binding AddItemCommand}">
+                                            Добавить запись
+                                        </Button>
+                                    </StackPanel>
+                                    <!--#endregion-->
+
+                                    <!--#region Редактирование выбранной записи-->
+                                    <StackPanel Grid.Column="5">
+                                        <TextBlock Margin="5" FontSize="16" FontWeight="Bold">Редактирование выбранной записи</TextBlock>
+
+                                        <Grid DataContext="{Binding ItemsCollectionView.CurrentItem}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="30" />
+                                                <RowDefinition Height="30" />
+                                                <RowDefinition Height="auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Style="{StaticResource FieldLabel}">Название:</TextBlock>
+                                            <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                            <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}">Обозначение:</TextBlock>
+                                            <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Designation, UpdateSourceTrigger=PropertyChanged}" />
+
+                                            <Button Grid.Row="5" Grid.ColumnSpan="2"
+                                                    Margin="0,5" Padding="5,2"
+                                                    HorizontalAlignment="Center"
+                                                    Command="{Binding Path=DataContext.BudgetItems.RemoveItemCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}">
+                                                Удалить запись
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                    <!--#endregion-->
+                                </Grid>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </TabItem>
+            </TabControl>
+        </DockPanel>
+
+        <!--  Авторизация  -->
+        <Grid Width="480" HorizontalAlignment="Center"
+              VerticalAlignment="Center" Background="White"
+              DataContext="{Binding Authorization}">
+            <Grid.Style>
+                <Style TargetType="{x:Type Grid}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Authorized}" Value="False">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="(Grid.Opacity)" To="1.0" Duration="0:0:0.5" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation BeginTime="0:0:3" Storyboard.TargetProperty="(Grid.Opacity)" To="0.0" Duration="0:0:0.5" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Margin="20,20,20,10" HorizontalAlignment="Center" FontSize="26" FontWeight="Bold">Программа «План/факт-анализ»</TextBlock>
+            <TextBlock Grid.Row="1" HorizontalAlignment="Center" FontSize="22" FontWeight="SemiBold">Авторизация</TextBlock>
+
+            <Grid Grid.Row="2" Margin="0,0,0,20">
+                <!--  Успешная авторизация  -->
+                <StackPanel VerticalAlignment="Center" Opacity="0.0">
+                    <StackPanel.Style>
+                        <Style TargetType="{x:Type StackPanel}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Authorized}" Value="False">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="(StackPanel.Opacity)" To="0.0" Duration="0:0:0" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+
+                                    <DataTrigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation BeginTime="0:0:0.5" Storyboard.TargetProperty="(StackPanel.Opacity)" To="1.0" Duration="0:0:0.5" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.ExitActions>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <TextBlock HorizontalAlignment="Center" FontSize="21">Вы вошли в систему как</TextBlock>
+                    <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" TextBlock.FontSize="19">
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock FontStyle="Italic" Text="{Binding Role, Converter={StaticResource DescriptionConverter}, StringFormat=' ({0})'}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!--  Вход под зарегистрированным аккаунтом  -->
                 <Grid>
+                    <Grid.Style>
+                        <Style TargetType="{x:Type Grid}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Authorized}" Value="False">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <BooleanAnimationUsingKeyFrames BeginTime="0:0:0.5" Storyboard.TargetProperty="(Grid.IsEnabled)" Duration="0:0:0.5">
+                                                    <DiscreteBooleanKeyFrame KeyTime="0:0:0.5" Value="True" />
+                                                </BooleanAnimationUsingKeyFrames>
+                                                <DoubleAnimation BeginTime="0:0:0.5" Storyboard.TargetProperty="(Grid.Opacity)" To="1.0" Duration="0:0:0.5" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+
+                                    <DataTrigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <BooleanAnimationUsingKeyFrames Storyboard.TargetProperty="(Grid.IsEnabled)" Duration="0:0:0.5">
+                                                    <DiscreteBooleanKeyFrame KeyTime="0:0:0.5" Value="False" />
+                                                </BooleanAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetProperty="(Grid.Opacity)" To="0.0" Duration="0:0:0.5" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.ExitActions>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
-                        <ColumnDefinition Width="auto" />
                     </Grid.ColumnDefinitions>
 
-                    <DataGrid Style="{StaticResource defaultGrid}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Name}" Header="Название" />
-                            <DataGridTextColumn Binding="{Binding PlannedOperation}" Header="Соотв. плановая операция" />
-                            <DataGridTextColumn Binding="{Binding Date, StringFormat={}{0: dd.MM.yyyy}}" Header="Дата" />
-                            <DataGridTextColumn Binding="{Binding Value}" CellStyle="{StaticResource numericCell}" Header="Значение" />
-                            <DataGridTextColumn Binding="{Binding LabourIntensity}" CellStyle="{StaticResource numericCell}" Header="Трудоёмкость (ч.)" />
-                            <DataGridTextColumn Binding="{Binding BudgetItem.Name}" Header="Статья бюджета" />
-                            <DataGridTextColumn Binding="{Binding ResponsibilityCenter.Name}" Header="ЦФО" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <Grid Grid.Column="1">
+                    <Grid Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" TextBlock.FontSize="15">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto" />
+                            <RowDefinition Height="20" />
                             <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="20" />
+                            <RowDefinition />
                         </Grid.RowDefinitions>
+
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto" />
-                            <ColumnDefinition />
+                            <ColumnDefinition Width="60" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="150" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.ColumnSpan="2" Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
+                        <TextBlock Style="{StaticResource FieldLabel}">Логин:</TextBlock>
+                        <TextBox Grid.Column="2" Style="{StaticResource Field}" Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}" />
 
-                        <TextBlock Grid.Row="1" Margin="5,0">Название:</TextBlock>
-                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewObject.Name}" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Пароль:</TextBlock>
+                        <PasswordBox Name="AuthPassBox" Grid.Row="2"
+                                     Grid.Column="2" Padding="1,0,1,1"
+                                     BorderThickness="0,0,0,1" PasswordChanged="PasswordBoxTextChanged" />
+                        <TextBox Name="AuthPassTextBox" Grid.Row="2"
+                                 Grid.Column="2"
+                                 Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
+                                 TextChanged="PasswordTextBoxChanged" Visibility="Collapsed" />
 
-                        <TextBlock Grid.Row="2" Margin="5,0" VerticalAlignment="Center">Дата:</TextBlock>
-                        <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding NewObject.Date}" />
-
-                        <TextBlock Grid.Row="3" Margin="5,0">Значение:</TextBlock>
-                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding NewObject.Value}" />
-
-                        <TextBlock Grid.Row="4" Margin="5,0" VerticalAlignment="Center">Статья бюджета:</TextBlock>
-                        <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding Source={x:Static vm:BudgetItemViewModel.Collection}}" SelectedItem="{Binding NewObject.BudgetItem}" />
-
-                        <TextBlock Grid.Row="5" Margin="5,0">Трудоёмкость (ч.):</TextBlock>
-                        <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding NewObject.LabourIntensity}" />
-
-                        <TextBlock Grid.Row="6" Margin="5,0" VerticalAlignment="Center">Плановая операция:</TextBlock>
-                        <ComboBox Grid.Row="6" Grid.Column="1" ItemsSource="{Binding Source={x:Static vm:PlannedOperationViewModel.Collection}}" SelectedItem="{Binding NewObject.PlannedOperation}" />
-
-                        <TextBlock Grid.Row="7" Margin="5,0" VerticalAlignment="Center">ЦФО:</TextBlock>
-                        <ComboBox Grid.Row="7" Grid.Column="1" ItemsSource="{Binding Source={x:Static vm:ResponsibilityCenterViewModel.Collection}}" SelectedItem="{Binding NewObject.ResponsibilityCenter}" />
-
-                        <Button Grid.Row="8" Grid.ColumnSpan="2"
-                                Margin="0,5" Padding="5,2"
-                                HorizontalAlignment="Center"
-                                Command="{Binding AddObjectCommand}">
-                            Добавить запись
+                        <Button Grid.Row="4" Grid.ColumnSpan="3"
+                                Width="140"
+                                Command="{Binding AuthorizeCommand}"
+                                TextBlock.FontSize="18">
+                            Войти
                         </Button>
                     </Grid>
                 </Grid>
-            </TabItem>
+            </Grid>
 
-            <TabItem DataContext="{Binding PlanFactTable}" Header="План/факт-таблица">
-                <StackPanel>
-                    <StackPanel Margin="5" Orientation="Horizontal">
-                        <TextBlock Margin="5,0" VerticalAlignment="Center">Начало:</TextBlock>
-                        <DatePicker SelectedDate="{Binding BeginDate}" />
-
-                        <TextBlock Margin="5,0" VerticalAlignment="Center">Конец:</TextBlock>
-                        <DatePicker SelectedDate="{Binding EndDate}" />
-
-                        <Button Padding="5,3" Command="{Binding GenerateTableCommand}">Сформировать таблицу</Button>
-                    </StackPanel>
-
-                    <DataGrid CanUserSortColumns="False" ItemContainerStyleSelector="{StaticResource PlanFactTableRowStyleSelector}" Style="{StaticResource defaultGrid}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding BudgetItem}" Header="Статья бюджета" />
-                            <DataGridTextColumn Binding="{Binding PlannedOperation.Name}" Header="Плановая операция" />
-                            <DataGridTextColumn Binding="{Binding ActualOperation.Name}" Header="Фактическая операция" />
-                            <DataGridTextColumn Binding="{Binding PlannedValue}" CellStyle="{StaticResource numericCell}" Header="Плановое значение" />
-                            <DataGridTextColumn Binding="{Binding ActualValue}" CellStyle="{StaticResource numericCell}" Header="Фактическое значение" />
-                            <DataGridTextColumn Binding="{Binding Deviation}" Header="Абсолютное отклонение" />
-                            <DataGridTextColumn Binding="{Binding ResponsibilityCenter}" Header="Центр финансовой ответственности" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </StackPanel>
-            </TabItem>
-
-            <TabItem Header="Справочники">
-                <TabControl Margin="5">
-                    <TabItem DataContext="{Binding BudgetItems}" Header="Статьи бюджета">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <ListView ItemsSource="{Binding Items}" />
-
-                            <Grid Grid.Column="1">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto" />
-                                    <RowDefinition Height="auto" />
-                                    <RowDefinition Height="auto" />
-                                    <RowDefinition Height="auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="auto" />
-                                    <ColumnDefinition />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.ColumnSpan="2" Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
-
-                                <TextBlock Grid.Row="1" Margin="5,0">Название:</TextBlock>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewObject.Name}" />
-
-                                <TextBlock Grid.Row="2" Margin="5,0">
-                                    Единица<LineBreak />
-                                    измерения:</TextBlock>
-                                <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Source={x:Static vm:MeasurementUnitViewModel.Collection}}" SelectedItem="{Binding NewObject.MeasurementUnit}" />
-
-                                <Button Grid.Row="3" Grid.ColumnSpan="2"
-                                        Margin="0,5" Padding="5,2"
-                                        HorizontalAlignment="Center"
-                                        Command="{Binding AddObjectCommand}">
-                                    Добавить запись
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </TabItem>
-
-                    <TabItem DataContext="{Binding ResponsibilityCenters}" Header="ЦФО">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <ListView ItemsSource="{Binding Items}" />
-
-                            <Grid Grid.Column="1">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto" />
-                                    <RowDefinition Height="auto" />
-                                    <RowDefinition Height="auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="auto" />
-                                    <ColumnDefinition />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.ColumnSpan="2" Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
-
-                                <TextBlock Grid.Row="1" Margin="5,0">Название:</TextBlock>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewObject.Name}" />
-
-                                <Button Grid.Row="2" Grid.ColumnSpan="2"
-                                        Margin="0,5" Padding="5,2"
-                                        HorizontalAlignment="Center"
-                                        Command="{Binding AddObjectCommand}">
-                                    Добавить запись
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </TabItem>
-
-                    <TabItem DataContext="{Binding Scenarios}" Header="Сценарии">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <ListView ItemsSource="{Binding Items}" />
-
-                            <Grid Grid.Column="1">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto" />
-                                    <RowDefinition Height="auto" />
-                                    <RowDefinition Height="auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="auto" />
-                                    <ColumnDefinition />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.ColumnSpan="2" Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
-
-                                <TextBlock Grid.Row="1" Margin="5,0">Название:</TextBlock>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewObject.Name}" />
-
-                                <Button Grid.Row="2" Grid.ColumnSpan="2"
-                                        Margin="0,5" Padding="5,2"
-                                        HorizontalAlignment="Center"
-                                        Command="{Binding AddObjectCommand}">
-                                    Добавить запись
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </TabItem>
-
-                    <TabItem DataContext="{Binding MeasurementUnits}" Header="Единицы измерения">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <ListView ItemsSource="{Binding Items}" />
-
-                            <Grid Grid.Column="1">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto" />
-                                    <RowDefinition Height="auto" />
-                                    <RowDefinition Height="auto" />
-                                    <RowDefinition Height="auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="auto" />
-                                    <ColumnDefinition />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.ColumnSpan="2" Margin="5" FontSize="16" FontWeight="Bold">Добавление новой записи</TextBlock>
-
-                                <TextBlock Grid.Row="1" Margin="5,0">Название:</TextBlock>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewObject.Name}" />
-
-                                <TextBlock Grid.Row="2" Margin="5,0">Обозначение:</TextBlock>
-                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding NewObject.Designation}" />
-
-                                <Button Grid.Row="3" Grid.ColumnSpan="2"
-                                        Margin="0,5" Padding="5,2"
-                                        HorizontalAlignment="Center"
-                                        Command="{Binding AddObjectCommand}">
-                                    Добавить запись
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </TabItem>
-                </TabControl>
-            </TabItem>
-        </TabControl>
+            <Rectangle Grid.RowSpan="3" RadiusX="10"
+                       RadiusY="10" Stroke="Black"
+                       StrokeThickness="2" />
+        </Grid>
     </Grid>
 </Window>

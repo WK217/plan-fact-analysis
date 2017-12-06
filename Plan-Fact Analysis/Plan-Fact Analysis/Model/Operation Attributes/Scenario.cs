@@ -5,12 +5,17 @@
     /// </summary>
     public sealed class Scenario
     {
-        public static readonly Scenario Default = new Scenario (@"По умолчанию");
+        public static Scenario Default { get; set; }
 
         /// <summary>
         /// Название сценария.
         /// </summary>
         public string Name { get; set; }
+
+        public Scenario ( )
+        {
+
+        }
 
         public Scenario (string name)
         {

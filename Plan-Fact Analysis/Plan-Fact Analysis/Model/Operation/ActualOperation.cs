@@ -48,7 +48,14 @@ namespace PlanFactAnalysis.Model
         /// <summary>
         /// Соответствующая запланированная операция.
         /// </summary>
-        public PlannedOperationCore PlannedOperation { get; set; }
+        public PlannedOperation PlannedOperation { get; set; }
+
+        public ActualOperation ( )
+            : base ( )
+        {
+            BudgetItem = BudgetItem.Default;
+            ResponsibilityCenter = ResponsibilityCenter.Default;
+        }
 
         public ActualOperation (string name, DateTime date, BudgetItem budgetItem, ResponsibilityCenter responsibilityCenter, double value, double labourIntensity = 0)
             : base (value, labourIntensity)
@@ -60,7 +67,7 @@ namespace PlanFactAnalysis.Model
             ResponsibilityCenter = responsibilityCenter;
         }
 
-        public ActualOperation (string name, DateTime date, PlannedOperationCore plannedOperation, double value, double labourIntensity = 0)
+        public ActualOperation (string name, DateTime date, PlannedOperation plannedOperation, double value, double labourIntensity = 0)
             : base (value, labourIntensity)
         {
             Name = name;

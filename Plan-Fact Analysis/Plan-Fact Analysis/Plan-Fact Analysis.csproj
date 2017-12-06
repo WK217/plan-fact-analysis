@@ -36,23 +36,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.dll</HintPath>
-    </Reference>
-    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.SQLite, Version=1.0.106.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Data.SQLite.Core.1.0.106.0\lib\net451\System.Data.SQLite.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Data.SQLite.EF6, Version=1.0.106.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.EF6.1.0.106.0\lib\net451\System.Data.SQLite.EF6.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Data.SQLite.Linq, Version=1.0.106.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Linq.1.0.106.0\lib\net451\System.Data.SQLite.Linq.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -76,39 +64,44 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Model\ActualOperation.cs" />
-    <Compile Include="Model\BudgetItem.cs" />
+    <Compile Include="Model\Operation\ActualOperation.cs" />
+    <Compile Include="Model\Operation Attributes\BudgetItem.cs" />
     <Compile Include="Model\Configuration.cs" />
-    <Compile Include="Model\FileManager.cs" />
-    <Compile Include="Model\IOperationInfo.cs" />
-    <Compile Include="Model\MeasurementUnit.cs" />
-    <Compile Include="Model\Operation.cs" />
-    <Compile Include="Model\PlannedOperationCore.cs" />
-    <Compile Include="Model\PlannedOperationScenario.cs" />
-    <Compile Include="Model\ResponsibilityCenter.cs" />
-    <Compile Include="Model\Scenario.cs" />
+    <Compile Include="Model\DataManager.cs" />
+    <Compile Include="Model\Operation\IOperationInfo.cs" />
+    <Compile Include="Model\Operation Attributes\MeasurementUnit.cs" />
+    <Compile Include="Model\Operation\Operation.cs" />
+    <Compile Include="Model\Operation\PlannedOperation.cs" />
+    <Compile Include="Model\Operation\PlannedOperationScenario.cs" />
+    <Compile Include="Model\Operation Attributes\ResponsibilityCenter.cs" />
+    <Compile Include="Model\Operation Attributes\Scenario.cs" />
     <Compile Include="Model\User.cs" />
     <Compile Include="Model\UserRole.cs" />
-    <Compile Include="ViewModel\ActualOperationViewModel.cs" />
-    <Compile Include="ViewModel\Collections\BudgetItemsCollectionViewModel.cs" />
-    <Compile Include="ViewModel\Collections\MeasurementUnitsCollectionViewModel.cs" />
-    <Compile Include="ViewModel\Collections\ResponsibilityCentersCollectionViewModel.cs" />
-    <Compile Include="ViewModel\Collections\ScenariosCollectionViewModel.cs" />
+    <Compile Include="ViewModel\AuthorizationViewModel.cs" />
+    <Compile Include="ViewModel\Fact\ActualOperationViewModel.cs" />
+    <Compile Include="ViewModel\Operation Attributes\IOperationAttributeViewModel.cs" />
+    <Compile Include="ViewModel\Operation Attributes\OperationAttributeRegistryViewModel.cs" />
     <Compile Include="ViewModel\PlanFact\ActualOperationComparisonViewModel.cs" />
     <Compile Include="ViewModel\PlanFact\BudgetItemComparisonViewModel.cs" />
-    <Compile Include="ViewModel\BudgetItemViewModel.cs" />
-    <Compile Include="ViewModel\FactRegistryViewModel.cs" />
+    <Compile Include="ViewModel\Operation Attributes\BudgetItemViewModel.cs" />
+    <Compile Include="ViewModel\Fact\FactRegistryViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
-    <Compile Include="ViewModel\MeasurementUnitViewModel.cs" />
+    <Compile Include="ViewModel\Operation Attributes\MeasurementUnitViewModel.cs" />
     <Compile Include="ViewModel\PlanFact\PlanFactTableViewModel.cs" />
     <Compile Include="ViewModel\PlanFact\PlannedOperationComparisonViewModel.cs" />
-    <Compile Include="ViewModel\PlannedOperationScenarioViewModel.cs" />
-    <Compile Include="ViewModel\PlannedOperationViewModel.cs" />
-    <Compile Include="ViewModel\PlanRegistryViewModel.cs" />
+    <Compile Include="ViewModel\Plan\PlannedOperationScenarioRegistryViewModel.cs" />
+    <Compile Include="ViewModel\Plan\PlannedOperationScenarioViewModel.cs" />
+    <Compile Include="ViewModel\Plan\PlannedOperationViewModel.cs" />
+    <Compile Include="ViewModel\Plan\PlanRegistryViewModel.cs" />
+    <Compile Include="ViewModel\PropertyChangedBase.cs" />
+    <Compile Include="ViewModel\RegistryViewModel.cs" />
     <Compile Include="ViewModel\RelayCommand.cs" />
-    <Compile Include="ViewModel\ResponsibilityCenterViewModel.cs" />
-    <Compile Include="ViewModel\ScenarioViewModel.cs" />
+    <Compile Include="ViewModel\Operation Attributes\ResponsibilityCenterViewModel.cs" />
+    <Compile Include="ViewModel\Operation Attributes\ScenarioViewModel.cs" />
+    <Compile Include="ViewModel\SubViewModelBase.cs" />
+    <Compile Include="ViewModel\UserViewModel.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
+    <Compile Include="View\DescriptionConverter.cs" />
     <Compile Include="View\MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
@@ -141,7 +134,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Page Include="View\MainView.xaml">
       <SubType>Designer</SubType>

@@ -1,50 +1,57 @@
-﻿using PlanFactAnalysis.Model;
-using PlanFactAnalysis.ViewModel.PlanFact;
+﻿using Microsoft.Win32;
+using PlanFactAnalysis.Model;
 
 namespace PlanFactAnalysis.ViewModel
 {
     [Magic]
-    internal sealed class MainViewModel : ViewModelBase
+    internal sealed class MainViewModel : PropertyChangedBase
     {
+        readonly DataManager _dataManager;
+
+        readonly AuthorizationViewModel _authorization;
+        public AuthorizationViewModel Authorization => _authorization;
+
         public PlanRegistryViewModel PlanRegistry { get; set; }
-        public FactRegistryViewModel FactRegistry { get; set; }
+        public RegistryViewModel<ActualOperationViewModel, ActualOperation> FactRegistry { get; set; }
         public PlanFactTableViewModel PlanFactTable { get; set; }
 
-        public BudgetItemsCollectionViewModel BudgetItems { get; set; }
-        public MeasurementUnitsCollectionViewModel MeasurementUnits { get; set; }
-        public ResponsibilityCentersCollectionViewModel ResponsibilityCenters { get; set; }
-        public ScenariosCollectionViewModel Scenarios { get; set; }
+        public OperationAttributeRegistryViewModel<BudgetItemViewModel, BudgetItem> BudgetItems { get; set; }
+        public OperationAttributeRegistryViewModel<MeasurementUnitViewModel, MeasurementUnit> MeasurementUnits { get; set; }
+        public OperationAttributeRegistryViewModel<ResponsibilityCenterViewModel, ResponsibilityCenter> ResponsibilityCenters { get; set; }
+        public OperationAttributeRegistryViewModel<ScenarioViewModel, Scenario> Scenarios { get; set; }
 
-        public MainViewModel (Configuration configuration)
+        public MainViewModel (DataManager dataManager, Configuration configuration)
         {
-            #region Единицы измерения
-            foreach (var item in configuration.MeasurementUnits)
-                new MeasurementUnitViewModel (item);
-            #endregion
+            _dataManager = dataManager;
 
-            #region Статьи бюджета
-            foreach (var item in configuration.BudgetItems)
-                new BudgetItemViewModel (item);
-            #endregion
+            _authorization = new AuthorizationViewModel (configuration.Users);
 
-            #region ЦФО
-            foreach (var item in configuration.ResponsibilityCenters)
-                new ResponsibilityCenterViewModel (item);
-            #endregion
+            BudgetItems = new OperationAttributeRegistryViewModel<BudgetItemViewModel, BudgetItem> (this, configuration.BudgetItems);
+            MeasurementUnits = new OperationAttributeRegistryViewModel<MeasurementUnitViewModel, MeasurementUnit> (this, configuration.MeasurementUnits);
+            ResponsibilityCenters = new OperationAttributeRegistryViewModel<ResponsibilityCenterViewModel, ResponsibilityCenter> (this, configuration.ResponsibilityCenters);
+            Scenarios = new OperationAttributeRegistryViewModel<ScenarioViewModel, Scenario> (this, configuration.Scenarios);
 
-            #region Сценарии
-            foreach (var item in configuration.Scenarios)
-                new ScenarioViewModel (item);
-            #endregion
+            PlanRegistry = new PlanRegistryViewModel (this, configuration.PlannedOperations);
+            FactRegistry = new RegistryViewModel<ActualOperationViewModel, ActualOperation> (this, configuration.ActualOperations);
+            PlanFactTable = new PlanFactTableViewModel (PlanRegistry, FactRegistry, this);
 
-            PlanRegistry = new PlanRegistryViewModel (configuration.PlannedOperations);
-            FactRegistry = new FactRegistryViewModel (configuration.ActualOperations);
-            PlanFactTable = new PlanFactTableViewModel (PlanRegistry, FactRegistry);
+            _exportDatabaseCommand = new RelayCommand (param =>
+            {
+                OpenFileDialog openDataBaseDialog = new OpenFileDialog
+                {
+                    Filter = "Базы данных программы «План/факт-анализ» (*.pfa))|*.pfa|Все файлы (*.*)|*.*",
+                    CheckFileExists = true,
+                };
 
-            BudgetItems = new BudgetItemsCollectionViewModel ( );
-            MeasurementUnits = new MeasurementUnitsCollectionViewModel ( );
-            ResponsibilityCenters = new ResponsibilityCentersCollectionViewModel ( );
-            Scenarios = new ScenariosCollectionViewModel ( );
+                if (openDataBaseDialog.ShowDialog ( ) == true)
+                {
+                    dataManager.EstablishDBConnection (openDataBaseDialog.FileName);
+                    dataManager.ExportConfiguration ( );
+                }
+            });
         }
+
+        readonly RelayCommand _exportDatabaseCommand;
+        public RelayCommand ExportDatabaseCommand => _exportDatabaseCommand;
     }
 }

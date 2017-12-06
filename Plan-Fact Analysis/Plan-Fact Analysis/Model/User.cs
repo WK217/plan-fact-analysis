@@ -14,6 +14,15 @@ namespace PlanFactAnalysis.Model
         public string Login => _login;
         public UserRole Role { get; set; }
 
+        public User (string name, string login, string passHashed, string hashSalt, UserRole role)
+        {
+            Name = name;
+            _login = login;
+            _passHashed = passHashed;
+            _hashSalt = hashSalt;
+            Role = role;
+        }
+
         public User (string name, string login, string password, UserRole role)
         {
             Name = name;
