@@ -17,7 +17,10 @@ namespace PlanFactAnalysis.ViewModel
             _actualOperations = actualOperation;
         }
 
+        public ObservableCollection<ActualOperationViewModel> ActualOperations => _actualOperations;
+
         public PlannedOperationViewModel PlannedOperation => _plannedOperation;
+        public BudgetItemViewModel BudgetItem => _plannedOperation.BudgetItem;
         public ResponsibilityCenterViewModel ResponsibilityCenter => _plannedOperation.ResponsibilityCenter;
 
         public double PlannedValue => _plannedOperation.Value;

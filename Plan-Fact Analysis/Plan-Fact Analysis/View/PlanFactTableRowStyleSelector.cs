@@ -20,12 +20,18 @@ namespace PlanFactAnalysis.View
         public override Style SelectStyle (object item, DependencyObject container)
         {
             if (item is BudgetItemComparisonViewModel)
-                return (Style)_dictionary[@"rowLevel1"];
-
-            else if (item is PlannedOperationComparisonViewModel)
                 return (Style)_dictionary[@"rowLevel2"];
 
-            return (Style)_dictionary[@"rowLevel3"];
+            else if (item is PlannedOperationComparisonViewModel)
+                return (Style)_dictionary[@"rowLevel3"];
+
+            else if (item is ComparisonViewModel)
+            {
+                Style result = (Style)_dictionary[string.Format (@"rowLevel{0}", (item as ComparisonViewModel).Level.ToString ( ))];
+                return result;
+            }
+
+            return (Style)_dictionary[@"rowLevel4"];
         }
     }
 }

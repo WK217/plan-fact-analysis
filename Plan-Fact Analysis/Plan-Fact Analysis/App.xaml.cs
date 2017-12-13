@@ -1,6 +1,4 @@
-﻿using Microsoft.Win32;
-using PlanFactAnalysis.Model;
-using System.Windows;
+﻿using System.Windows;
 
 namespace PlanFactAnalysis
 {
@@ -13,27 +11,14 @@ namespace PlanFactAnalysis
         {
             base.OnStartup (e);
 
-            ViewModel.MainViewModel mainViewModel;
+            Model.DataManager model;
+            //e.Args[0] — путь к открываемому файлу базы данных.
+            if (e.Args.Length > 0)
+                model = new Model.DataManager (e.Args[0]);
+            else
+                model = new Model.DataManager ( );
 
-            DataManager dataManager = new DataManager ( );
-
-            try
-            {
-                OpenFileDialog openDataBaseDialog = new OpenFileDialog
-                {
-                    Filter = "Базы данных программы «План/факт-анализ» (*.pfa))|*.pfa|Все файлы (*.*)|*.*",
-                    CheckFileExists = true,
-                };
-
-                if (openDataBaseDialog.ShowDialog ( ) == true)
-                    dataManager.EstablishDBConnection (openDataBaseDialog.FileName);
-
-                mainViewModel = new ViewModel.MainViewModel (dataManager, dataManager.GetConfiguration ( ));
-            }
-            catch (System.Exception)
-            {
-                mainViewModel = new ViewModel.MainViewModel (dataManager, dataManager.GetDefaultConfiguration ( ));
-            }
+            ViewModel.MainViewModel mainViewModel = new ViewModel.MainViewModel (model);
 
             View.MainView mainView = new View.MainView ( )
             {
@@ -41,6 +26,24 @@ namespace PlanFactAnalysis
             };
 
             mainView.Show ( );
+
+            //try
+            //{
+            //    OpenFileDialog openDataBaseDialog = new OpenFileDialog
+            //    {
+            //        Filter = "Базы данных программы «План/факт-анализ» (*.pfa))|*.pfa|Все файлы (*.*)|*.*",
+            //        CheckFileExists = true,
+            //    };
+
+            //    if (openDataBaseDialog.ShowDialog ( ) == true)
+            //        model.EstablishDBConnection (openDataBaseDialog.FileName);
+
+            //    mainViewModel = new ViewModel.MainViewModel (model, model.GetConfiguration ( ));
+            //}
+            //catch (System.Exception)
+            //{
+            //    mainViewModel = new ViewModel.MainViewModel (model, model.GetDefaultConfiguration ( ));
+            //}
         }
     }
 }

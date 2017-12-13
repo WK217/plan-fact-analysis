@@ -54,6 +54,24 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="Xceed.Wpf.AvalonDock, Version=3.2.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.3.2.0\lib\net40\Xceed.Wpf.AvalonDock.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Aero, Version=3.2.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.3.2.0\lib\net40\Xceed.Wpf.AvalonDock.Themes.Aero.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Metro, Version=3.2.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.3.2.0\lib\net40\Xceed.Wpf.AvalonDock.Themes.Metro.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.VS2010, Version=3.2.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.3.2.0\lib\net40\Xceed.Wpf.AvalonDock.Themes.VS2010.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.DataGrid, Version=3.2.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.3.2.0\lib\net40\Xceed.Wpf.DataGrid.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.Toolkit, Version=3.2.0.0, Culture=neutral, PublicKeyToken=3e4669d2f30244f4, processorArchitecture=MSIL">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.3.2.0\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -64,6 +82,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Model\IModel.cs" />
     <Compile Include="Model\Operation\ActualOperation.cs" />
     <Compile Include="Model\Operation Attributes\BudgetItem.cs" />
     <Compile Include="Model\Configuration.cs" />
@@ -78,6 +97,7 @@
     <Compile Include="Model\User.cs" />
     <Compile Include="Model\UserRole.cs" />
     <Compile Include="ViewModel\AuthorizationViewModel.cs" />
+    <Compile Include="ViewModel\FactRegistryViewModel.cs" />
     <Compile Include="ViewModel\Fact\ActualOperationViewModel.cs" />
     <Compile Include="ViewModel\Operation Attributes\IOperationAttributeViewModel.cs" />
     <Compile Include="ViewModel\Operation Attributes\OperationAttributeRegistryViewModel.cs" />
@@ -87,25 +107,30 @@
     <Compile Include="ViewModel\Fact\FactRegistryViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\Operation Attributes\MeasurementUnitViewModel.cs" />
+    <Compile Include="ViewModel\PlanFact\ComparisonViewModel.cs" />
     <Compile Include="ViewModel\PlanFact\PlanFactTableViewModel.cs" />
     <Compile Include="ViewModel\PlanFact\PlannedOperationComparisonViewModel.cs" />
+    <Compile Include="ViewModel\PlanFact\ResponsibilityCenterComparisonViewModel.cs" />
+    <Compile Include="ViewModel\PlanFact\TableGroupMode.cs" />
     <Compile Include="ViewModel\Plan\PlannedOperationScenarioRegistryViewModel.cs" />
     <Compile Include="ViewModel\Plan\PlannedOperationScenarioViewModel.cs" />
     <Compile Include="ViewModel\Plan\PlannedOperationViewModel.cs" />
     <Compile Include="ViewModel\Plan\PlanRegistryViewModel.cs" />
     <Compile Include="ViewModel\PropertyChangedBase.cs" />
+    <Compile Include="ViewModel\RegistrationViewModel.cs" />
     <Compile Include="ViewModel\RegistryViewModel.cs" />
     <Compile Include="ViewModel\RelayCommand.cs" />
     <Compile Include="ViewModel\Operation Attributes\ResponsibilityCenterViewModel.cs" />
     <Compile Include="ViewModel\Operation Attributes\ScenarioViewModel.cs" />
     <Compile Include="ViewModel\SubViewModelBase.cs" />
-    <Compile Include="ViewModel\UserViewModel.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="View\DescriptionConverter.cs" />
     <Compile Include="View\MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="View\PlanFactGridTypeConverter.cs" />
     <Compile Include="View\PlanFactTableRowStyleSelector.cs" />
+    <Compile Include="View\TabItemDataContextConverter.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -126,6 +151,15 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include="packages.config" />
+    <None Include="plan-fact-1.pfa">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="plan-fact-2.pfa">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="plan-fact.pfa">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

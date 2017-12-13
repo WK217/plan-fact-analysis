@@ -4,7 +4,7 @@ namespace PlanFactAnalysis.Model
 {
     public enum UserRole
     {
-        [Description("")]
+        [Description("Не задано")]
         None,
         [Description ("Планировщик")]
         Planner,

@@ -6,7 +6,7 @@ namespace PlanFactAnalysis.ViewModel
     [Magic]
     internal sealed class BudgetItemComparisonViewModel : PropertyChangedBase
     {
-        readonly MainViewModel _context;
+        readonly MainViewModel _context; 
 
         readonly PlanFactTableViewModel _planFactTable;
         readonly BudgetItemViewModel _budgetItem;

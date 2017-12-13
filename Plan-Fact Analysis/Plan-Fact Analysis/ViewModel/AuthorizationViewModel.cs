@@ -1,19 +1,26 @@
 ﻿using System.Linq;
 using PlanFactAnalysis.Model;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace PlanFactAnalysis.ViewModel
 {
     [Magic]
-    internal sealed class AuthorizationViewModel : PropertyChangedBase
+    internal sealed class AuthorizationViewModel : PropertyChangedBase, IDataErrorInfo
     {
-        IList<User> _users;
+        readonly MainViewModel _context;
+        readonly RegistrationViewModel _registration;
+        public RegistrationViewModel Registration => _registration;
+
+        readonly IList<User> _users;
         User _loggedUser;
 
-        public AuthorizationViewModel (IList<User> users)
+        public AuthorizationViewModel (MainViewModel context, IList<User> users)
         {
+            _context = context;
             _users = users;
-            _registeringUser = new UserViewModel (this);
+
+            _registration = new RegistrationViewModel (users);
 
             _authorizeCommand = new RelayCommand (param =>
             {
@@ -22,11 +29,26 @@ namespace PlanFactAnalysis.ViewModel
             param => !string.IsNullOrWhiteSpace(Login) && !string.IsNullOrWhiteSpace (Password));
         }
 
-        public string Name => _loggedUser?.Name;
-        public UserRole Role => _loggedUser == null ? UserRole.None : _loggedUser.Role;
-        
-        public string Login { get; set; }
+        public string Name
+        {
+            get => _loggedUser?.Name;
+            set
+            {
+                if (_loggedUser != null)
+                    _loggedUser.Name = value;
+            }
+        }
+        public UserRole Role
+        {
+            get => _loggedUser == null ? UserRole.None : _loggedUser.Role;
+            set
+            {
+                if (_loggedUser != null)
+                    _loggedUser.Role = value;
+            }
+        }
 
+        public string Login { get; set; }
         public string Password { get; set; }
 
         public void Authorize ( )
@@ -52,40 +74,49 @@ namespace PlanFactAnalysis.ViewModel
 
                 Login = string.Empty;
                 Password = string.Empty;
+                
+                _context.PlanRegistry.UpdateAllProperties ( );
+                _context.FactRegistry.UpdateAllProperties ( );
+                _context.PlanFactTable.UpdateAllProperties ( );
             }
             else
                 Authorized = false;
         }
 
-        public bool CanRegister (string login)
-        {
-            return _users.FirstOrDefault (u => u.Login == login) == null;
-        }
-
-        public void Register (string login, string name, string password, UserRole role)
-        {
-            if (CanRegister (login))
-            {
-                User newUser = new User (name, login, password, role);
-                _users.Add (newUser);
-            }
-        }
-        
         public bool Authorized { get; set; }
 
-        public void LogOff()
+        public void Logout()
         {
             Authorized = false;
-            Login = string.Empty;
-            Password = string.Empty;
+            _loggedUser = null;
+            RaisePropertyChanged (nameof (Name));
+            RaisePropertyChanged (nameof (Role));
         }
-
-        public UserRole LoggedUserRole => _loggedUser.Role;
-
-        readonly UserViewModel _registeringUser;
-        public UserViewModel RegisteringUser => _registeringUser;
 
         readonly RelayCommand _authorizeCommand;
         public RelayCommand AuthorizeCommand => _authorizeCommand;
+
+        public string Error => throw new System.NotImplementedException ( );
+        public string this[string columnName]
+        {
+            get
+            {
+                switch (columnName)
+                {
+                    case nameof (Login):
+                        if (string.IsNullOrWhiteSpace (Login))
+                            return "Вводимый логин не должен быть пустым.";
+                        break;
+                    case nameof (Password):
+                        if (string.IsNullOrWhiteSpace (Password))
+                            return "Вводимый пароль не должен быть пустым.";
+                        break;
+                    default:
+                        break;
+                }
+
+                return string.Empty;
+            }
+        }
     }
 }

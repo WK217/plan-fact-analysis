@@ -18,15 +18,37 @@ namespace PlanFactAnalysis.Model
         /// </summary>
         public IList<PlannedOperationScenario> Scenarios { get; set; }
 
+        DateTime _beginDate = DateTime.Today, _endDate = DateTime.Today;
+
         /// <summary>
         /// Дата начала планирования.
         /// </summary>
-        public DateTime BeginDate { get; set; }
+        public DateTime BeginDate
+        {
+            get => _beginDate;
+            set
+            {
+                _beginDate = value;
+
+                if (value > _endDate)
+                    EndDate = value;
+            }
+        }
 
         /// <summary>
         /// Дата окончания планирования.
         /// </summary>
-        public DateTime EndDate { get; set; }
+        public DateTime EndDate
+        {
+            get => _endDate;
+            set
+            {
+                _endDate = value;
+
+                if (value < _beginDate)
+                    BeginDate = value;
+            }
+        }
 
         /// <summary>
         /// Статья бюджета.

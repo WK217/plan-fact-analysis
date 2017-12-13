@@ -1,309 +1,83 @@
-﻿using System;
+﻿using System.Windows;
+using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
+using Xceed.Wpf.Toolkit;
 
 namespace PlanFactAnalysis.Model
 {
-    public sealed class DataManager
+    public sealed class DataManager : IModel
     {
-        SQLiteConnection _DBconnection;
+        #region Collections
+        readonly IList<User> _users = new List<User> ( );
+        public IList<User> Users => _users;
 
-        public IList<User> Users { get; private set; }
-        public IList<MeasurementUnit> MeasurementUnits { get; private set; }
-        public IList<BudgetItem> BudgetItems { get; private set; }
-        public IList<ResponsibilityCenter> ResponsibilityCenters { get; private set; }
-        public IList<Scenario> Scenarios { get; private set; }
-        public IList<PlannedOperation> PlannedOperations { get; private set; }
-        public IList<ActualOperation> ActualOperations { get; private set; }
-
-        public SQLiteConnection EstablishDBConnection (string fileName)
+        readonly IList<MeasurementUnit> _measurementUnits = new List<MeasurementUnit> ( )
         {
-            if (File.Exists (Path.GetFullPath (fileName)))
-            {
-                _DBconnection = new SQLiteConnection ("Data Source=" + fileName + ";Version=3;");
+            MeasurementUnit.Default
+        };
+        public IList<MeasurementUnit> MeasurementUnits => _measurementUnits;
 
-                return _DBconnection;
+        readonly IList<BudgetItem> _budgetItems = new List<BudgetItem> ( )
+        {
+            BudgetItem.Default
+        };
+        public IList<BudgetItem> BudgetItems => _budgetItems;
+
+        readonly IList<ResponsibilityCenter> _responsibilityCenters = new List<ResponsibilityCenter> ( )
+        {
+            ResponsibilityCenter.Default
+        };
+        public IList<ResponsibilityCenter> ResponsibilityCenters => _responsibilityCenters;
+
+        readonly IList<Scenario> _scenarios = new List<Scenario> ( )
+        {
+            Scenario.Default
+        };
+        public IList<Scenario> Scenarios => _scenarios;
+
+        readonly IList<PlannedOperation> _plannedOperations = new List<PlannedOperation> ( );
+        public IList<PlannedOperation> PlannedOperations => _plannedOperations;
+
+        readonly IList<ActualOperation> _actualOperations = new List<ActualOperation> ( );
+        public IList<ActualOperation> ActualOperations => _actualOperations;
+        #endregion
+
+        public DataManager ( )
+        {
+
+        }
+
+        public DataManager (string DBfileName)
+        {
+            ImportConfiguration (DBfileName);
+        }
+
+        public SQLiteConnection EstablishDBConnection (string DBfileName)
+        {
+            if (ApproveFileName (DBfileName))
+            {
+                SQLiteConnection connection = new SQLiteConnection ("Data Source=" + DBfileName + ";Version=3;");
+                return connection;
             }
 
-            return null;
+            throw new FileFormatException (message: "", sourceUri: new Uri (Path.GetFullPath (DBfileName), UriKind.Absolute));
         }
 
-        public Configuration GetDefaultConfiguration ( )
+        public void ImportConfiguration (string DBfileName)
         {
-            #region Пользователи
-            Users = new List<User> ( )
-            {
-                new User("Имя планировщика", "planner", "1", UserRole.Planner),
-                new User("Имя исполнителя", "executor", "2", UserRole.Executor),
-                new User("Имя руководителя", "manager", "3", UserRole.Manager)
-            };
-            #endregion
-
-            #region Единицы измерения
-            MeasurementUnits = new List<MeasurementUnit> ( )
-            {
-                new MeasurementUnit("Рубли", "руб."),
-                new MeasurementUnit("Штуки", "шт."),
-                new MeasurementUnit("Литры", "л."),
-                new MeasurementUnit("Тонны", "т."),
-            };
-
-            MeasurementUnit.Default = MeasurementUnits[0];
-            #endregion
-
-            #region Статьи бюджета
-            BudgetItems = new List<BudgetItem> ( )
-            {
-                new BudgetItem("Не задано", MeasurementUnit.Default),
-                new BudgetItem("Доходы от реализации продукции", MeasurementUnits[0]),
-                new BudgetItem("Доходы от прочей деятельности", MeasurementUnits[0]),
-                new BudgetItem("Прочее", MeasurementUnits[2]),
-                new BudgetItem("Производство материала", MeasurementUnits[1]),
-                new BudgetItem("Производство материала", MeasurementUnits[2]),
-                new BudgetItem("Производство материала", MeasurementUnits[3]),
-                new BudgetItem("Производственные расходы", MeasurementUnits[0]),
-                new BudgetItem("Коммерческие расходы", MeasurementUnits[0]),
-                new BudgetItem("Административные расходы", MeasurementUnits[0]),
-                new BudgetItem("Налоги", MeasurementUnits[0])
-            };
-
-            BudgetItem.Default = BudgetItems[0];
-            #endregion
-
-            #region ЦФО
-            ResponsibilityCenters = new List<ResponsibilityCenter> ( )
-            {
-                new ResponsibilityCenter("Не задано"),
-                new ResponsibilityCenter("Центр затрат"),
-                new ResponsibilityCenter("Центр дохода"),
-                new ResponsibilityCenter("Центр валового дохода"),
-                new ResponsibilityCenter("Центр прибыли"),
-                new ResponsibilityCenter("Центр рентабельности инвестиций")
-            };
-
-            ResponsibilityCenter.Default = ResponsibilityCenters[0];
-            #endregion
-
-            #region Сценарии
-            Scenarios = new List<Scenario> ( )
-            {
-                new Scenario("Пессимистичный"),
-                new Scenario("Реалистичный"),
-                new Scenario("Оптимистичный"),
-            };
-
-            Scenario.Default = Scenarios[1];
-            #endregion
-
-            #region Плановые операции
-            PlannedOperations = new List<PlannedOperation> ( )
-            {
-                new PlannedOperation ("Пример операции #1", new DateTime(2016, 11, 27, 00, 00, 00), new DateTime(2017, 11, 27, 02, 05, 35),
-                    BudgetItems[0], ResponsibilityCenters[1],
-                    Scenarios[1], 200000),
-
-                new PlannedOperation ("Пример операции #2", new DateTime(2016, 12, 11, 00, 00, 00), new DateTime(2017, 11, 30, 02, 05, 35),
-                    BudgetItems[2], ResponsibilityCenters[3],
-                    Scenarios[1], 400000),
-
-                new PlannedOperation ("Пример операции #3", new DateTime(2016, 10, 09, 00, 00, 00), new DateTime(2017, 06, 20, 02, 05, 35),
-                    BudgetItems[1], ResponsibilityCenters[1], 
-                    Scenarios[1], 60000),
-
-                new PlannedOperation ("Пример операции #4", new DateTime(2016, 05, 12, 00, 00, 00), new DateTime(2017, 10, 21, 02, 05, 35),
-                    BudgetItems[0], ResponsibilityCenters[0],
-                    Scenarios[1], 217000),
-            };
-
-            PlannedOperations[2].Scenarios.Add (new PlannedOperationScenario (Scenarios[0], 55000));
-            PlannedOperations[2].Scenarios.Add (new PlannedOperationScenario (Scenarios[2], 70000));
-            #endregion
-
-            #region Фактические операции
-            ActualOperations = new List<ActualOperation> ( )
-            {
-                new ActualOperation("Фактическая операция #1.1", new DateTime(2016, 12, 01, 00, 00, 00), PlannedOperations[0], 70000),
-                new ActualOperation("Фактическая операция #1.2", new DateTime(2017, 01, 01, 00, 00, 00), PlannedOperations[0], 70000),
-                new ActualOperation("Фактическая операция #1.3", new DateTime(2017, 02, 01, 00, 00, 00), PlannedOperations[0], 70000),
-                
-                new ActualOperation("Фактическая операция #2", new DateTime(2017, 05, 01, 00, 00, 00), PlannedOperations[1], 412000),
-
-                new ActualOperation("Фактическая операция #3", new DateTime(2017, 06, 01, 00, 00, 00), PlannedOperations[2], 50000),
-
-                new ActualOperation("Фактическая операция #4", new DateTime(2017, 04, 01, 00, 00, 00), PlannedOperations[3], 228000),
-            };
-            #endregion
-
-            return new Configuration (Users, MeasurementUnits, BudgetItems, ResponsibilityCenters, Scenarios, PlannedOperations, ActualOperations);
+            if (ApproveFileName (DBfileName))
+                ImportConfiguration (EstablishDBConnection (DBfileName));
         }
 
-        public void ExportConfiguration ( )
-        {
-            _DBconnection.Open ( );
-
-            //#region Пользователи
-            //foreach (var item in Users)
-            //{
-            //    SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM user ORDER BY id", _DBconnection);
-            //}
-            //#endregion
-
-            //#region Единицы измерения
-            //MeasurementUnits = new List<MeasurementUnit> ( );
-            //using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM measurement_unit ORDER BY id", _DBconnection))
-            //{
-            //    using (SQLiteDataReader reader = command.ExecuteReader ( ))
-            //    {
-            //        while (reader.Read ( ))
-            //        {
-            //            MeasurementUnit newItem = new MeasurementUnit (
-            //                name: reader.GetString (1),
-            //                designation: reader.GetString (2));
-
-            //            if (reader.GetInt32 (0) == 0)
-            //                MeasurementUnit.Default = newItem;
-
-            //            MeasurementUnits.Add (newItem);
-            //        }
-            //    }
-            //}
-
-            //#endregion
-
-            //#region Статьи бюджета
-            //BudgetItems = new List<BudgetItem> ( );
-            //using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM budget_item ORDER BY id", _DBconnection))
-            //{
-            //    using (SQLiteDataReader reader = command.ExecuteReader ( ))
-            //    {
-            //        while (reader.Read ( ))
-            //        {
-            //            BudgetItem newItem = new BudgetItem (
-            //                name: reader.GetString (1),
-            //                measurementUnit: MeasurementUnits[reader.GetInt32 (2)]);
-
-            //            if (reader.GetInt32 (0) == 0)
-            //                BudgetItem.Default = newItem;
-
-            //            BudgetItems.Add (newItem);
-            //        }
-            //    }
-            //}
-            //#endregion
-
-            //#region ЦФО
-            //ResponsibilityCenters = new List<ResponsibilityCenter> ( );
-            //using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM responsibility_center ORDER BY id", _DBconnection))
-            //{
-            //    using (SQLiteDataReader reader = command.ExecuteReader ( ))
-            //    {
-            //        while (reader.Read ( ))
-            //        {
-            //            ResponsibilityCenter newItem = new ResponsibilityCenter (
-            //                name: reader.GetString (1));
-
-            //            if (reader.GetInt32 (0) == 0)
-            //                ResponsibilityCenter.Default = newItem;
-
-            //            ResponsibilityCenters.Add (newItem);
-            //        }
-            //    }
-            //}
-            //#endregion
-
-            //#region Сценарии
-            //Scenarios = new List<Scenario> ( );
-            //using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM scenario ORDER BY id", _DBconnection))
-            //{
-            //    using (SQLiteDataReader reader = command.ExecuteReader ( ))
-            //    {
-            //        while (reader.Read ( ))
-            //        {
-            //            Scenario newItem = new Scenario (
-            //                name: reader.GetString (1));
-
-            //            if (reader.GetInt32 (0) == 0)
-            //                Scenario.Default = newItem;
-
-            //            Scenarios.Add (newItem);
-            //        }
-            //    }
-            //}
-            //#endregion
-
-            //#region Плановые операции
-            //PlannedOperations = new List<PlannedOperation> ( );
-
-            //using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM planned_operation ORDER BY id", _DBconnection))
-            //{
-            //    using (SQLiteDataReader reader = command.ExecuteReader ( ))
-            //    {
-            //        while (reader.Read ( ))
-            //        {
-            //            IList<PlannedOperationScenario> plannedOperationScenarios = new List<PlannedOperationScenario> ( );
-
-            //            using (SQLiteCommand scenariosCommand = new SQLiteCommand (@"SELECT * FROM planned_operation_scenario WHERE planned_operation_id = " + reader.GetInt32 (0), _DBconnection))
-            //            {
-            //                using (SQLiteDataReader scenariosReader = scenariosCommand.ExecuteReader ( ))
-            //                {
-            //                    while (scenariosReader.Read ( ))
-            //                    {
-            //                        PlannedOperationScenario plannedOperationScenario = new PlannedOperationScenario (
-            //                            scenario: Scenarios[scenariosReader.GetInt32 (1)],
-            //                            value: scenariosReader.GetInt32 (2),
-            //                            labourIntensity: scenariosReader.GetInt32 (3));
-
-            //                        plannedOperationScenarios.Add (plannedOperationScenario);
-            //                    }
-            //                }
-            //            }
-
-            //            PlannedOperation newItem = new PlannedOperation (
-            //                name: reader.GetString (1),
-            //                beginDate: new DateTime (reader.GetInt64 (2)),
-            //                endDate: new DateTime (reader.GetInt64 (3)),
-            //                budgetItem: BudgetItems[reader.GetInt32 (4)],
-            //                responsibilityCenter: ResponsibilityCenters[reader.GetInt32 (5)],
-            //                plannedOperationScenarios: plannedOperationScenarios);
-
-            //            PlannedOperations.Add (newItem);
-            //        }
-            //    }
-            //}
-            //#endregion
-
-            //#region Фактические операции
-            //ActualOperations = new List<ActualOperation> ( );
-            //using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM actual_operation ORDER BY id", _DBconnection))
-            //{
-            //    using (SQLiteDataReader reader = command.ExecuteReader ( ))
-            //    {
-            //        while (reader.Read ( ))
-            //        {
-            //            ActualOperation newItem = new ActualOperation (
-            //                name: reader.GetString (1),
-            //                plannedOperation: PlannedOperations[reader.GetInt32 (2) - 1],
-            //                date: new DateTime (reader.GetInt64 (3)),
-            //                value: reader.GetInt32 (4),
-            //                labourIntensity: reader.GetInt32 (5));
-
-            //            ActualOperations.Add (newItem);
-            //        }
-            //    }
-            //}
-            //#endregion
-
-            _DBconnection.Close ( );
-        }
-
-        public Configuration GetConfiguration ( )
-        {
-            _DBconnection.Open ( );
+        public void ImportConfiguration (SQLiteConnection DBconnection)
+        {            
+            DBconnection.Open ( );
 
             #region Пользователи
-            Users = new List<User> ( );
-            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM user ORDER BY id", _DBconnection))
+            Users.Clear ( );
+            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM user ORDER BY id", DBconnection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader ( ))
                 {
@@ -323,21 +97,23 @@ namespace PlanFactAnalysis.Model
             #endregion
 
             #region Единицы измерения
-            MeasurementUnits = new List<MeasurementUnit> ( );
-            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM measurement_unit ORDER BY id", _DBconnection))
+            MeasurementUnits.Clear ( );
+            MeasurementUnits.Add (MeasurementUnit.Default);
+
+            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM measurement_unit WHERE id > 0 ORDER BY id", DBconnection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader ( ))
                 {
                     while (reader.Read ( ))
                     {
-                        MeasurementUnit newItem = new MeasurementUnit (
+                        if (reader.GetInt32 (0) != 0)
+                        {
+                            MeasurementUnit newItem = new MeasurementUnit (
                             name: reader.GetString (1),
                             designation: reader.GetString (2));
 
-                        if (reader.GetInt32 (0) == 0)
-                            MeasurementUnit.Default = newItem;
-
-                        MeasurementUnits.Add (newItem);
+                            MeasurementUnits.Add (newItem);
+                        }
                     }
                 }
             }
@@ -345,70 +121,75 @@ namespace PlanFactAnalysis.Model
             #endregion
 
             #region Статьи бюджета
-            BudgetItems = new List<BudgetItem> ( );
-            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM budget_item ORDER BY id", _DBconnection))
+            BudgetItems.Clear ( );
+            BudgetItems.Add (BudgetItem.Default);
+
+            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM budget_item WHERE id > 0 ORDER BY id", DBconnection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader ( ))
                 {
                     while (reader.Read ( ))
                     {
-                        BudgetItem newItem = new BudgetItem (
-                            name:               reader.GetString (1),
-                            measurementUnit:    MeasurementUnits[reader.GetInt32 (2)]);
+                        if (reader.GetInt32 (0) != 0)
+                        {
+                            BudgetItem newItem = new BudgetItem (
+                            name: reader.GetString (1),
+                            measurementUnit: MeasurementUnits[reader.GetInt32 (2)]);
 
-                        if (reader.GetInt32 (0) == 0)
-                            BudgetItem.Default = newItem;
-
-                        BudgetItems.Add (newItem);
+                            BudgetItems.Add (newItem);
+                        }
                     }
                 }
             }
             #endregion
 
             #region ЦФО
-            ResponsibilityCenters = new List<ResponsibilityCenter> ( );
-            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM responsibility_center ORDER BY id", _DBconnection))
+            ResponsibilityCenters.Clear ( );
+            ResponsibilityCenters.Add (ResponsibilityCenter.Default);
+
+            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM responsibility_center WHERE id > 0 ORDER BY id", DBconnection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader ( ))
                 {
                     while (reader.Read ( ))
                     {
-                        ResponsibilityCenter newItem = new ResponsibilityCenter (
-                            name: reader.GetString (1));
+                        if (reader.GetInt32 (0) != 0)
+                        {
+                            ResponsibilityCenter newItem = new ResponsibilityCenter (
+                                name: reader.GetString (1));
 
-                        if (reader.GetInt32 (0) == 0)
-                            ResponsibilityCenter.Default = newItem;
-
-                        ResponsibilityCenters.Add (newItem);
+                            ResponsibilityCenters.Add (newItem);
+                        }
                     }
                 }
             }
             #endregion
 
             #region Сценарии
-            Scenarios = new List<Scenario> ( );
-            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM scenario ORDER BY id", _DBconnection))
+            Scenarios.Clear ( );
+            Scenarios.Add (Scenario.Default);
+
+            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM scenario WHERE id > 0 ORDER BY id", DBconnection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader ( ))
                 {
                     while (reader.Read ( ))
                     {
-                        Scenario newItem = new Scenario (
+                        if (reader.GetInt32 (0) != 0)
+                        {
+                            Scenario newItem = new Scenario (
                             name: reader.GetString (1));
 
-                        if (reader.GetInt32 (0) == 0)
-                            Scenario.Default = newItem;
-
-                        Scenarios.Add (newItem);
+                            Scenarios.Add (newItem);
+                        }
                     }
                 }
             }
             #endregion
 
             #region Плановые операции
-            PlannedOperations = new List<PlannedOperation> ( );
-
-            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM planned_operation ORDER BY id", _DBconnection))
+            PlannedOperations.Clear ( );
+            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM planned_operation ORDER BY id", DBconnection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader ( ))
                 {
@@ -416,7 +197,7 @@ namespace PlanFactAnalysis.Model
                     {
                         IList<PlannedOperationScenario> plannedOperationScenarios = new List<PlannedOperationScenario> ( );
 
-                        using (SQLiteCommand scenariosCommand = new SQLiteCommand (@"SELECT * FROM planned_operation_scenario WHERE planned_operation_id = " + reader.GetInt32 (0), _DBconnection))
+                        using (SQLiteCommand scenariosCommand = new SQLiteCommand (@"SELECT * FROM planned_operation_scenario WHERE planned_operation_id = " + reader.GetInt32 (0), DBconnection))
                         {
                             using (SQLiteDataReader scenariosReader = scenariosCommand.ExecuteReader ( ))
                             {
@@ -424,8 +205,8 @@ namespace PlanFactAnalysis.Model
                                 {
                                     PlannedOperationScenario plannedOperationScenario = new PlannedOperationScenario (
                                         scenario:           Scenarios[scenariosReader.GetInt32 (1)],
-                                        value:              scenariosReader.GetInt32 (2),
-                                        labourIntensity:    scenariosReader.GetInt32 (3));
+                                        value:              scenariosReader.GetDouble (2),
+                                        labourIntensity:    scenariosReader.GetDouble (3));
 
                                     plannedOperationScenarios.Add (plannedOperationScenario);
                                 }
@@ -447,8 +228,8 @@ namespace PlanFactAnalysis.Model
             #endregion
 
             #region Фактические операции
-            ActualOperations = new List<ActualOperation> ( );
-            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM actual_operation ORDER BY id", _DBconnection))
+            ActualOperations.Clear ( );
+            using (SQLiteCommand command = new SQLiteCommand (@"SELECT * FROM actual_operation ORDER BY id", DBconnection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader ( ))
                 {
@@ -467,9 +248,126 @@ namespace PlanFactAnalysis.Model
             }
             #endregion
 
-            _DBconnection.Close ( );
+            DBconnection.Close ( );
 
-            return new Configuration (Users, MeasurementUnits, BudgetItems, ResponsibilityCenters, Scenarios, PlannedOperations, ActualOperations);
+            Xceed.Wpf.Toolkit.MessageBox.Show ("Импорт данных из файла успешно завершён.", "Импорт из файла", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+        }
+        
+        public void ExportConfiguration (string DBfileName)
+        {
+            if (!ApproveFileName (DBfileName))
+                SQLiteConnection.CreateFile (DBfileName);
+
+            ExportConfiguration (EstablishDBConnection (DBfileName));
+        }
+
+        public void ExportConfiguration (SQLiteConnection DBconnection)
+        {
+            DBconnection.Open ( );
+
+            #region Пользователи
+            new SQLiteCommand (@"DROP TABLE IF EXISTS user", DBconnection).ExecuteNonQuery ( );
+            new SQLiteCommand (@"CREATE TABLE user (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, login TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, salt TEXT NOT NULL, name TEXT NOT NULL, role_id INTEGER DEFAULT (1) NOT NULL)",
+                DBconnection).ExecuteNonQuery ( );
+
+            foreach (var user in Users)
+                new SQLiteCommand (user.GenerateSQLInsertQuery ( ), DBconnection).ExecuteNonQuery ( );
+            #endregion
+
+            #region Единицы измерения
+            new SQLiteCommand (@"DROP TABLE IF EXISTS measurement_unit", DBconnection).ExecuteNonQuery ( );
+            new SQLiteCommand (@"CREATE TABLE measurement_unit (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, name TEXT NOT NULL UNIQUE, designation TEXT NOT NULL UNIQUE)",
+                DBconnection).ExecuteNonQuery ( );
+
+            foreach (var measurementUnit in MeasurementUnits)
+                new SQLiteCommand (measurementUnit.GenerateSQLInsertQuery ( ), DBconnection).ExecuteNonQuery ( );
+            #endregion
+
+            #region Статьи бюджета
+            new SQLiteCommand (@"DROP TABLE IF EXISTS budget_item", DBconnection).ExecuteNonQuery ( );
+            new SQLiteCommand (@"CREATE TABLE budget_item (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, name TEXT NOT NULL, measurement_unit_id INTEGER DEFAULT (0), FOREIGN KEY (measurement_unit_id) REFERENCES measurement_unit (id) ON INSERT SET DEFAULT)",
+                DBconnection).ExecuteNonQuery ( );
+
+            foreach (var budgetItem in BudgetItems)
+            {
+                if (!budgetItem.IsDefault)
+                    new SQLiteCommand (string.Format (@"INSERT INTO budget_item (name, measurement_unit_id)
+                        VALUES ('{0}', '{1}')", budgetItem.Name, MeasurementUnits.IndexOf (budgetItem.MeasurementUnit)), DBconnection).ExecuteNonQuery ( );
+                else
+                    new SQLiteCommand (string.Format (@"INSERT INTO budget_item (id, name, measurement_unit_id)
+                        VALUES ('0', '{0}', '{1}')", budgetItem.Name, MeasurementUnits.IndexOf (budgetItem.MeasurementUnit)), DBconnection).ExecuteNonQuery ( );
+            }
+            #endregion
+
+            #region ЦФО
+            new SQLiteCommand (@"DROP TABLE IF EXISTS responsibility_center", DBconnection).ExecuteNonQuery ( );
+            new SQLiteCommand (@"CREATE TABLE responsibility_center (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)",
+                DBconnection).ExecuteNonQuery ( );
+
+            foreach (var responsibilityCenter in ResponsibilityCenters)
+                new SQLiteCommand (responsibilityCenter.GenerateSQLInsertQuery ( ), DBconnection).ExecuteNonQuery ( );
+            #endregion
+
+            #region Сценарии
+            new SQLiteCommand (@"DROP TABLE IF EXISTS scenario", DBconnection).ExecuteNonQuery ( );
+            new SQLiteCommand (@"CREATE TABLE scenario (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)",
+                DBconnection).ExecuteNonQuery ( );
+
+            foreach (var scenario in Scenarios)
+                new SQLiteCommand (scenario.GenerateSQLInsertQuery ( ), DBconnection).ExecuteNonQuery ( );
+            #endregion
+
+            #region Плановые операции
+            new SQLiteCommand (@"DROP TABLE IF EXISTS planned_operation", DBconnection).ExecuteNonQuery ( );
+            new SQLiteCommand (@"CREATE TABLE planned_operation (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, begin_date_ticks BIGINT NOT NULL DEFAULT (0), end_date_ticks BIGINT NOT NULL DEFAULT (0), budget_item_id INTEGER NOT NULL DEFAULT (0), responsibility_center_id INTEGER NOT NULL DEFAULT (0), comment TEXT, FOREIGN KEY (budget_item_id) REFERENCES budget_item (id), FOREIGN KEY (responsibility_center_id) REFERENCES responsibility_center (id))",
+                DBconnection).ExecuteNonQuery ( );
+
+            new SQLiteCommand (@"DROP TABLE IF EXISTS planned_operation_scenario", DBconnection).ExecuteNonQuery ( );
+            new SQLiteCommand (@"CREATE TABLE planned_operation_scenario (planned_operation_id INTEGER NOT NULL, scenario_id INTEGER NOT NULL, value DOUBLE NOT NULL DEFAULT (0), labour_intensity DOUBLE NOT NULL DEFAULT (0), FOREIGN KEY (scenario_id) REFERENCES scenario (id) ON DELETE CASCADE, FOREIGN KEY (planned_operation_id) REFERENCES planned_operation (id) ON DELETE CASCADE, PRIMARY KEY (planned_operation_id, scenario_id))",
+                DBconnection).ExecuteNonQuery ( );
+
+            foreach (var plannedOperation in PlannedOperations)
+            {
+                new SQLiteCommand (string.Format (@"INSERT INTO planned_operation (name, begin_date_ticks, end_date_ticks, budget_item_id, responsibility_center_id, comment)
+                    VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')",
+                    plannedOperation.Name, plannedOperation.BeginDate.Ticks, plannedOperation.EndDate.Ticks,
+                    BudgetItems.IndexOf (plannedOperation.BudgetItem), ResponsibilityCenters.IndexOf (plannedOperation.ResponsibilityCenter), string.Empty),
+                    DBconnection).ExecuteNonQuery ( );
+
+                foreach (var scenario in plannedOperation.Scenarios)
+                {
+                    new SQLiteCommand (string.Format (@"INSERT INTO planned_operation_scenario (planned_operation_id, scenario_id, value, labour_intensity)
+                        VALUES ('{0}', '{1}', '{2}', '{3}')",
+                        PlannedOperations.IndexOf (plannedOperation), Scenarios.IndexOf (scenario.Scenario), scenario.Value, scenario.LabourIntensity),
+                        DBconnection).ExecuteNonQuery ( );
+                }
+            }
+            #endregion
+
+            #region Фактические операции
+            new SQLiteCommand (@"DROP TABLE IF EXISTS actual_operation", DBconnection).ExecuteNonQuery ( );
+            new SQLiteCommand (@"CREATE TABLE actual_operation (id INTEGER NOT NULL UNIQUE, name TEXT NOT NULL, planned_operation_id INTEGER NOT NULL, date_ticks BIGINT NOT NULL DEFAULT (0), value INTEGER NOT NULL DEFAULT (0), labour_intensity INTEGER NOT NULL DEFAULT (0), budget_item_id INTEGER NOT NULL DEFAULT (0), responsibility_center_id INTEGER NOT NULL DEFAULT (0), FOREIGN KEY (planned_operation_id) REFERENCES planned_operation (id) ON DELETE CASCADE, PRIMARY KEY (id), FOREIGN KEY (budget_item_id) REFERENCES budget_item (id), FOREIGN KEY (responsibility_center_id) REFERENCES responsibility_center (id))",
+                DBconnection).ExecuteNonQuery ( );
+
+            foreach (var actualOperation in ActualOperations)
+            {
+                new SQLiteCommand (string.Format (@"INSERT INTO actual_operation (name, planned_operation_id, date_ticks, value, labour_intensity, budget_item_id, responsibility_center_id)
+                    VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}')",
+                    actualOperation.Name, PlannedOperations.IndexOf (actualOperation.PlannedOperation), actualOperation.Date.Ticks,
+                    actualOperation.Value, actualOperation.LabourIntensity, BudgetItems.IndexOf (actualOperation.BudgetItem), ResponsibilityCenters.IndexOf (actualOperation.ResponsibilityCenter)),
+                    DBconnection).ExecuteNonQuery ( );
+            }
+            
+            #endregion
+
+            DBconnection.Close ( );
+
+            Xceed.Wpf.Toolkit.MessageBox.Show ("Экспорт данных в файл успешно завершён.", "Экспорт в файл", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+        }
+
+        bool ApproveFileName(string DBfileName)
+        {
+            return File.Exists (Path.GetFullPath (DBfileName)) && Path.GetExtension (DBfileName) == ".pfa";
         }
     }
 }

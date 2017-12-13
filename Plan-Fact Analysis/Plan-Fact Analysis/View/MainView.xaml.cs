@@ -1,5 +1,5 @@
-﻿using System.Timers;
-using System.Windows;
+﻿using System.Windows;
+using System.Windows.Controls;
 
 namespace PlanFactAnalysis.View
 {
@@ -13,15 +13,38 @@ namespace PlanFactAnalysis.View
             InitializeComponent ( );
         }
 
-        void PasswordBoxTextChanged (object sender, RoutedEventArgs e)
+        void LoginPassBoxTextChanged (object sender, RoutedEventArgs e)
         {
-            AuthPassTextBox.Text = AuthPassBox.Password;
+            LoginPassTextBox.Text = LoginPassBox.Password;
         }
 
-        void PasswordTextBoxChanged (object sender, System.Windows.Controls.TextChangedEventArgs e)
+        void LoginPassTextBoxChanged (object sender, TextChangedEventArgs e)
         {
-            if (AuthPassBox.Password != AuthPassTextBox.Text)
-                AuthPassBox.Password = AuthPassTextBox.Text;
+            if (LoginPassBox.Password != LoginPassTextBox.Text)
+                LoginPassBox.Password = LoginPassTextBox.Text;
+        }
+
+        void RegistrationPassBoxTextChanged (object sender, RoutedEventArgs e)
+        {
+            RegistrationPassTextBox.Text = RegistrationPassBox.Password;
+        }
+
+        void RegistrationPassTextBoxChanged (object sender, TextChangedEventArgs e)
+        {
+            if (RegistrationPassBox.Password != RegistrationPassTextBox.Text)
+                RegistrationPassBox.Password = RegistrationPassTextBox.Text;
+        }
+
+        void RegisterLinkClicked (object sender, RoutedEventArgs e)
+        {
+            Login.Visibility = Visibility.Collapsed;
+            Registration.Visibility = Visibility.Visible;
+        }
+
+        void LoginLinkClicked (object sender, RoutedEventArgs e)
+        {
+            Login.Visibility = Visibility.Visible;
+            Registration.Visibility = Visibility.Collapsed;
         }
 
         //void AuthHyperlinkClicked (object sender, RoutedEventArgs e)

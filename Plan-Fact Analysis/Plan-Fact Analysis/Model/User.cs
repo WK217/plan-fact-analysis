@@ -61,5 +61,11 @@ namespace PlanFactAnalysis.Model
         {
             return _passHashed == EncryptPassword (password, _hashSalt);
         }
+
+        public string GenerateSQLInsertQuery ( )
+        {
+            return string.Format (@"INSERT INTO user (login, password_hash, salt, name, role_id)
+                 VALUES ('{0}', '{1}', '{2}', '{3}', '{4}')", Login, _passHashed, _hashSalt, Name, (int)Role);
+        }
     }
 }

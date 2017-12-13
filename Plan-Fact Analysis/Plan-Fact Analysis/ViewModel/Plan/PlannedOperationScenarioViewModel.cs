@@ -1,4 +1,5 @@
-﻿using PlanFactAnalysis.Model;
+﻿using System.Linq;
+using PlanFactAnalysis.Model;
 
 namespace PlanFactAnalysis.ViewModel
 {
@@ -23,8 +24,34 @@ namespace PlanFactAnalysis.ViewModel
             set => _model.Scenario = _context.Scenarios.GetModelFromViewModel (value);
         }
 
-        public double Value { get => _model.Value; set => _model.Value = value; }
-        public double LabourIntensity { get => _model.LabourIntensity; set => _model.LabourIntensity = value; }
+        public double Value
+        {
+            get => _model.Value;
+            set
+            {
+                _model.Value = value;
+
+                var plannedOperation = (from op in _context.PlanRegistry.Items
+                                        where (op as PlannedOperationViewModel).SelectedPlannedOperationScenario == this
+                                        select op).FirstOrDefault ( );
+
+                plannedOperation.UpdateAllProperties ( );
+            }
+        }
+        public double LabourIntensity
+        {
+            get => _model.LabourIntensity;
+            set
+            {
+                _model.LabourIntensity = value;
+
+                var plannedOperation = (from op in _context.PlanRegistry.Items
+                                        where (op as PlannedOperationViewModel).SelectedPlannedOperationScenario == this
+                                        select op).FirstOrDefault ( );
+
+                plannedOperation.UpdateAllProperties ( );
+            }
+        }
 
         public override string ToString ( )
         {

@@ -1,4 +1,5 @@
 ﻿using PlanFactAnalysis.Model;
+using System.Linq;
 
 namespace PlanFactAnalysis.ViewModel
 {
@@ -24,7 +25,26 @@ namespace PlanFactAnalysis.ViewModel
         public MeasurementUnitViewModel MeasurementUnit
         {
             get => _context.MeasurementUnits.GetViewModelFromModel (_model.MeasurementUnit);
-            set => _model.MeasurementUnit = _context.MeasurementUnits.GetModelFromViewModel (value);
+            set
+            {
+                var plannedOperations = from op in _context.PlanRegistry.Items
+                                        where op.BudgetItem.MeasurementUnit == MeasurementUnit
+                                        select op;
+
+                var actualOperations = from op in _context.FactRegistry.Items
+                                       where op.BudgetItem.MeasurementUnit == MeasurementUnit
+                                       select op;
+
+                _model.MeasurementUnit = _context.MeasurementUnits.GetModelFromViewModel (value);
+
+                foreach (var plannedOperation in plannedOperations)
+                    plannedOperation.UpdateAllProperties ( );
+
+                foreach (var actualOperation in actualOperations)
+                    actualOperation.UpdateAllProperties ( );
+
+                UpdateAllProperties ( );
+            }
         }
 
         public override string ToString ( ) => string.Format (@"{0} ({1})", Name, MeasurementUnit.Designation);

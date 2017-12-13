@@ -2,14 +2,21 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:col="clr-namespace:System.Collections;assembly=mscorlib"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:sys="clr-namespace:System;assembly=mscorlib" xmlns:v="clr-namespace:PlanFactAnalysis.View"
-        xmlns:vm="clr-namespace:PlanFactAnalysis.ViewModel" Title="План/факт-анализ"
+        xmlns:vm="clr-namespace:PlanFactAnalysis.ViewModel" xmlns:xcdg="http://schemas.xceed.com/wpf/xaml/datagrid"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" Title="План/факт-анализ"
         Width="1600" Height="900"
-        WindowState="Maximized" mc:Ignorable="d">
+        TextBlock.FontSize="14" WindowState="Maximized"
+        mc:Ignorable="d">
     <!--  d:DataContext="{d:DesignInstance vm:MainViewModel}"  -->
 
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries />
+
+            <v:PlanFactTableRowStyleSelector x:Key="PlanFactTableRowStyleSelector" />
+            <v:DescriptionConverter x:Key="DescriptionConverter" />
+            <v:TabItemDataContextConverter x:Key="TabItemDataContextConverter" />
+            <v:PlanFactGridTypeConverter x:Key="PlanFactGridTypeConverter" />
 
             <Style x:Key="RegistryGrid" TargetType="{x:Type DataGrid}">
                 <Setter Property="AutoGenerateColumns" Value="False" />
@@ -59,36 +66,83 @@
                 </Setter>
             </Style>
 
+            <ControlTemplate x:Key="ErrorTemplate">
+                <DockPanel LastChildFill="true">
+                    <Border Width="20" Height="20"
+                            Margin="5,0,0,0" Background="Red"
+                            CornerRadius="10" DockPanel.Dock="right"
+                            ToolTip="{Binding ElementName=customAdorner, Path=AdornedElement.(Validation.Errors)[0].ErrorContent}">
+                        <TextBlock HorizontalAlignment="center" VerticalAlignment="center"
+                                   FontWeight="Bold" Foreground="white"
+                                   Text="!" />
+                    </Border>
+
+                    <AdornedElementPlaceholder Name="customAdorner" VerticalAlignment="Center" />
+                </DockPanel>
+            </ControlTemplate>
+
             <Style x:Key="Field" TargetType="{x:Type TextBox}">
                 <Setter Property="BorderThickness" Value="0,0,0,1" />
                 <Setter Property="Padding" Value="2,0,1,2" />
+                <Setter Property="Validation.ErrorTemplate" Value="{StaticResource ErrorTemplate}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="FieldPassword" TargetType="{x:Type PasswordBox}">
+                <Setter Property="BorderThickness" Value="0,0,0,1" />
+                <Setter Property="Padding" Value="2,0,1,2" />
+                <!--
+                    Padding="1,0,1,1"
+                    BorderThickness="0,0,0,1"
+                -->
+                <Setter Property="Validation.ErrorTemplate" Value="{StaticResource ErrorTemplate}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
             <Style x:Key="FieldComboBox" TargetType="{x:Type ComboBox}">
+                <Setter Property="Validation.ErrorTemplate" Value="{StaticResource ErrorTemplate}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
             <Style x:Key="FieldDatePicker" TargetType="{x:Type DatePicker}">
+                <Setter Property="Validation.ErrorTemplate" Value="{StaticResource ErrorTemplate}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
             <Style x:Key="FieldLabel" TargetType="{x:Type TextBlock}">
                 <Setter Property="Margin" Value="0,0,10,3" />
                 <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
-
-            <v:PlanFactTableRowStyleSelector x:Key="PlanFactTableRowStyleSelector" />
-            <v:DescriptionConverter x:Key="DescriptionConverter" />
+            <Style x:Key="FieldDateUpDown" TargetType="{x:Type xctk:DateTimeUpDown}">
+                <Setter Property="Format" Value="ShortDate" />
+                <Setter Property="TextAlignment" Value="Left" />
+                <Setter Property="Validation.ErrorTemplate" Value="{StaticResource ErrorTemplate}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="PlanFactGrid" BasedOn="{StaticResource RegistryGrid}" TargetType="{x:Type DataGrid}">
+                <Setter Property="CanUserResizeColumns" Value="True" />
+                <Setter Property="CanUserSortColumns" Value="False" />
+                <Setter Property="Grid.Row" Value="1" />
+                <Setter Property="ItemContainerStyleSelector" Value="{StaticResource PlanFactTableRowStyleSelector}" />
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid TextBlock.FontSize="14">
+    <Grid>
         <DockPanel>
             <Menu DockPanel.Dock="Top" FontSize="14">
                 <MenuItem Header="Файл">
-                    <MenuItem Header="Экспортировать…" Command="{Binding ExportDatabaseCommand}" />
+                    <MenuItem Command="{Binding ImportDatabaseCommand}" Header="Импорт…" />
+                    <MenuItem Command="{Binding ExportDatabaseCommand}" Header="Экспорт…" IsEnabled="{Binding Authorization.Authorized}" />
+                </MenuItem>
+                <MenuItem Header="Профиль" IsEnabled="{Binding Authorization.Authorized}">
+                    <MenuItem Header="Редактировать…">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource FieldLabel}">Имя:</TextBlock>
+                            <TextBox Margin="10,0,0,0" Background="Transparent" Style="{StaticResource Field}" Text="{Binding Authorization.Name}" />
+                        </StackPanel>
+                    </MenuItem>
+                    <MenuItem Command="{Binding LogoutCommand}" Header="Выйти" />
                 </MenuItem>
             </Menu>
 
-            <TabControl Name="MainPanel" DockPanel.Dock="Top">
+            <TabControl Name="MainPanel" DockPanel.Dock="Top" SelectedItem="{Binding SelectedItem, Converter={StaticResource TabItemDataContextConverter}, Mode=OneWayToSource}">
                 <TabControl.Style>
                     <Style TargetType="{x:Type TabControl}">
                         <Style.Triggers>
@@ -120,7 +174,7 @@
                 </TabControl.Style>
 
                 <TabItem DataContext="{Binding PlanRegistry}" Header="Реестр плана">
-                    <Grid Margin="10">
+                    <Grid Margin="10" IsEnabled="{Binding IsEnabled}">
                         <Grid.RowDefinitions>
                             <RowDefinition />
                             <RowDefinition Height="auto" />
@@ -200,10 +254,10 @@
                                     <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
                                     <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}">Дата начала:</TextBlock>
-                                    <DatePicker Grid.Row="1" Grid.Column="1" SelectedDate="{Binding BeginDate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+                                    <xctk:DateTimeUpDown Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldDateUpDown}" Value="{Binding BeginDate, UpdateSourceTrigger=PropertyChanged}" />
 
                                     <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Дата окончания:</TextBlock>
-                                    <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding EndDate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+                                    <xctk:DateTimeUpDown Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldDateUpDown}" Value="{Binding EndDate, UpdateSourceTrigger=PropertyChanged}" />
 
                                     <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}">Статья бюджета:</TextBlock>
                                     <ComboBox Grid.Row="3" Grid.Column="1"
@@ -250,10 +304,10 @@
                                     <TextBox Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
                                     <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}">Дата начала:</TextBlock>
-                                    <DatePicker Grid.Row="1" Grid.Column="1" SelectedDate="{Binding BeginDate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+                                    <xctk:DateTimeUpDown Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldDateUpDown}" Value="{Binding BeginDate, UpdateSourceTrigger=PropertyChanged}" />
 
                                     <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Дата окончания:</TextBlock>
-                                    <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding EndDate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+                                    <xctk:DateTimeUpDown Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldDateUpDown}" Value="{Binding EndDate, UpdateSourceTrigger=PropertyChanged}" />
 
                                     <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}">Статья бюджета:</TextBlock>
                                     <ComboBox Grid.Row="3" Grid.Column="1"
@@ -270,7 +324,7 @@
                                     <TextBlock Grid.Column="3" Style="{StaticResource FieldLabel}">Сценарий:</TextBlock>
                                     <ComboBox Grid.Column="4" ItemsSource="{Binding Path=DataContext.Scenarios.Items, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}" SelectedItem="{Binding SelectedScenarioObject}" Style="{StaticResource FieldComboBox}" />
 
-                                    <TextBlock Grid.Row="1" Grid.Column="3" Style="{StaticResource FieldLabel}">Значение:</TextBlock>
+                                    <TextBlock Grid.Row="1" Grid.Column="3" Style="{StaticResource FieldLabel}" Text="{Binding BudgetItem.MeasurementUnit.Designation, StringFormat='Значение ({0}):'}" />
                                     <TextBox Grid.Row="1" Grid.Column="4" Style="{StaticResource Field}" Text="{Binding SelectedPlannedOperationScenario.Value, UpdateSourceTrigger=PropertyChanged}" />
 
                                     <TextBlock Grid.Row="2" Grid.Column="3" Style="{StaticResource FieldLabel}">Трудоёмкость (ч.):</TextBlock>
@@ -303,7 +357,7 @@
                 </TabItem>
 
                 <TabItem DataContext="{Binding FactRegistry}" Header="Реестр факта">
-                    <Grid Margin="10">
+                    <Grid Margin="10" IsEnabled="{Binding IsEnabled}">
                         <Grid.RowDefinitions>
                             <RowDefinition />
                             <RowDefinition Height="auto" />
@@ -316,7 +370,7 @@
                                 <DataGridTextColumn Width="8*" Binding="{Binding Date, StringFormat={}{0: dd.MM.yyyy}}" Header="Дата" />
                                 <DataGridTextColumn Width="8*" Binding="{Binding Value}" CellStyle="{StaticResource NumericCell}" Header="Значение" />
                                 <DataGridTextColumn Width="10*" Binding="{Binding LabourIntensity}" CellStyle="{StaticResource NumericCell}" Header="Трудоёмкость (ч.)" />
-                                <DataGridTextColumn Width="16*" Binding="{Binding BudgetItem.Name}" Header="Статья бюджета" />
+                                <DataGridTextColumn Width="16*" Binding="{Binding BudgetItem.FullName}" Header="Статья бюджета" />
                                 <DataGridTextColumn Width="8*" Binding="{Binding ResponsibilityCenter.Name}" Header="ЦФО" />
                             </DataGrid.Columns>
                         </DataGrid>
@@ -358,7 +412,7 @@
                                               Style="{StaticResource FieldComboBox}" />
 
                                     <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Дата:</TextBlock>
-                                    <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+                                    <xctk:DateTimeUpDown Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldDateUpDown}" Value="{Binding Date, UpdateSourceTrigger=PropertyChanged}" />
 
                                     <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}">Значение:</TextBlock>
                                     <TextBox Grid.Row="3" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
@@ -405,9 +459,9 @@
                                               Style="{StaticResource FieldComboBox}" />
 
                                     <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Дата:</TextBlock>
-                                    <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldDatePicker}" />
+                                    <xctk:DateTimeUpDown Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldDateUpDown}" Value="{Binding Date, UpdateSourceTrigger=PropertyChanged}" />
 
-                                    <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}">Значение:</TextBlock>
+                                    <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{Binding BudgetItem.MeasurementUnit.Designation, StringFormat='Значение ({0}):'}" />
                                     <TextBox Grid.Row="3" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
 
                                     <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}">Трудоёмкость (ч.):</TextBlock>
@@ -426,7 +480,7 @@
                                             Margin="0,5" Padding="5,2"
                                             HorizontalAlignment="Center"
                                             Command="{Binding Path=DataContext.FactRegistry.RemoveItemCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}">
-                                        Удалить сценарий
+                                        Удалить запись
                                     </Button>
                                 </Grid>
                             </StackPanel>
@@ -436,7 +490,7 @@
                 </TabItem>
 
                 <TabItem DataContext="{Binding PlanFactTable}" Header="План/факт-таблица">
-                    <Grid>
+                    <Grid IsEnabled="{Binding IsEnabled}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto" />
                             <RowDefinition />
@@ -449,7 +503,7 @@
                                 <Run>При расчёте итоговой план/факт-таблицы в расчёт идут только входящие в указанный временной промежуток операции.</Run>
                             </TextBlock>
 
-                            <Grid Margin="0,0,20,0">
+                            <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition Height="10" />
@@ -462,26 +516,85 @@
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Margin="5,0" VerticalAlignment="Center">Начало планирования:</TextBlock>
-                                <DatePicker Grid.Column="1" SelectedDate="{Binding BeginDate}" />
+                                <xctk:DateTimeUpDown Grid.Column="1" Style="{StaticResource FieldDateUpDown}" Value="{Binding BeginDate, UpdateSourceTrigger=PropertyChanged}" />
 
                                 <TextBlock Grid.Row="2" Margin="5,0" VerticalAlignment="Center">Конец планирования:</TextBlock>
-                                <DatePicker Grid.Row="2" Grid.Column="1" SelectedDate="{Binding EndDate}" />
+                                <xctk:DateTimeUpDown Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldDateUpDown}" Value="{Binding EndDate, UpdateSourceTrigger=PropertyChanged}" />
                             </Grid>
+
+                            <StackPanel Margin="20,0">
+                                <TextBlock>Вид группировки:</TextBlock>
+
+                                <ListBox ItemsSource="{Binding TableGroupModes}" SelectedItem="{Binding TableGroupMode}">
+                                    <!--<ListBox.ItemContainerStyle>
+                                        <Style>
+                                            <Setter Property="ListBoxItem.Background" Value="LightSteelBlue" />
+                                            <Setter Property="ListBoxItem.BorderBrush" Value="Black" />
+                                            <Setter Property="ListBoxItem.BorderThickness" Value="1" />
+                                            <Setter Property="ListBoxItem.Margin" Value="5" />
+                                            <Setter Property="ListBoxItem.Padding" Value="5" />
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>-->
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding ., Converter={StaticResource DescriptionConverter}}" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
 
                             <Button Padding="5,3" VerticalAlignment="Center" Command="{Binding GenerateTableCommand}">Сформировать таблицу</Button>
                         </StackPanel>
 
-                        <DataGrid Grid.Row="1" CanUserSortColumns="False" ItemContainerStyleSelector="{StaticResource PlanFactTableRowStyleSelector}" Style="{StaticResource RegistryGrid}">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Width="20*" Binding="{Binding BudgetItem}" Header="Статья бюджета" />
-                                <DataGridTextColumn Width="16*" Binding="{Binding PlannedOperation.Name}" Header="Плановая операция" />
-                                <DataGridTextColumn Width="16*" Binding="{Binding ActualOperation.Name}" Header="Фактическая операция" />
-                                <DataGridTextColumn Width="12*" Binding="{Binding PlannedValue}" CellStyle="{StaticResource NumericCell}" Header="Плановое значение" />
-                                <DataGridTextColumn Width="12*" Binding="{Binding ActualValue}" CellStyle="{StaticResource NumericCell}" Header="Фактическое значение" />
-                                <DataGridTextColumn Width="12*" Binding="{Binding Deviation}" Header="Абсолютное отклонение" />
-                                <DataGridTextColumn Width="12*" Binding="{Binding ResponsibilityCenter}" Header="ЦФО" />
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <!--<DataGrid Grid.Row="1" CanUserResizeColumns="True"
+                                  CanUserSortColumns="False"
+                                  ItemContainerStyleSelector="{StaticResource PlanFactTableRowStyleSelector}"
+                                  Style="{StaticResource RegistryGrid}"
+                                  Visibility="Collapsed">
+                                        <DataTrigger Binding="{Binding TableGroupMode}" Value="{x:Static vm:TableGroupMode.First}">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>-->
+                        <Grid Grid.Row="1" Visibility="{Binding TableGroupMode, Converter={StaticResource PlanFactGridTypeConverter}, ConverterParameter=1}">
+                            <DataGrid Name="FirstGrid" ItemsSource="{Binding ItemsCollectionView1}" Style="{StaticResource PlanFactGrid}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="20*" Binding="{Binding BudgetItem}" Header="Статья бюджета" />
+                                    <DataGridTextColumn Width="16*" Binding="{Binding PlannedOperation}" Header="Плановая операция" />
+                                    <DataGridTextColumn Width="16*" Binding="{Binding ActualOperation}" Header="Фактическая операция" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding PlannedValue}" CellStyle="{StaticResource NumericCell}" Header="Плановое значение" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding ActualValue}" CellStyle="{StaticResource NumericCell}" Header="Фактическое значение" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding AbsoluteDeviation}" Header="Абсолютное отклонение" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding ResponsibilityCenter}" Header="ЦФО" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+
+                        <Grid Grid.Row="1" Visibility="{Binding TableGroupMode, Converter={StaticResource PlanFactGridTypeConverter}, ConverterParameter=2}">
+                            <DataGrid Name="SecondGrid" ItemsSource="{Binding ItemsCollectionView2}" Style="{StaticResource PlanFactGrid}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="12*" Binding="{Binding ResponsibilityCenter}" Header="ЦФО" />
+                                    <DataGridTextColumn Width="20*" Binding="{Binding BudgetItem}" Header="Статья бюджета" />
+                                    <DataGridTextColumn Width="16*" Binding="{Binding PlannedOperation}" Header="Плановая операция" />
+                                    <DataGridTextColumn Width="16*" Binding="{Binding ActualOperation}" Header="Фактическая операция" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding PlannedValue}" CellStyle="{StaticResource NumericCell}" Header="Плановое значение" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding ActualValue}" CellStyle="{StaticResource NumericCell}" Header="Фактическое значение" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding AbsoluteDeviation}" Header="Абсолютное отклонение" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+
+                        <Grid Grid.Row="1" Visibility="{Binding TableGroupMode, Converter={StaticResource PlanFactGridTypeConverter}, ConverterParameter=3}">
+                            <DataGrid Name="ThirdGrid" ItemsSource="{Binding ItemsCollectionView3}" Style="{StaticResource PlanFactGrid}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="20*" Binding="{Binding BudgetItem}" Header="Статья бюджета" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding ResponsibilityCenter}" Header="ЦФО" />
+                                    <DataGridTextColumn Width="16*" Binding="{Binding PlannedOperation}" Header="Плановая операция" />
+                                    <DataGridTextColumn Width="16*" Binding="{Binding ActualOperation}" Header="Фактическая операция" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding PlannedValue}" CellStyle="{StaticResource NumericCell}" Header="Плановое значение" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding ActualValue}" CellStyle="{StaticResource NumericCell}" Header="Фактическое значение" />
+                                    <DataGridTextColumn Width="12*" Binding="{Binding AbsoluteDeviation}" Header="Абсолютное отклонение" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
                     </Grid>
                 </TabItem>
 
@@ -813,7 +926,7 @@
                                             <Button Grid.Row="5" Grid.ColumnSpan="2"
                                                     Margin="0,5" Padding="5,2"
                                                     HorizontalAlignment="Center"
-                                                    Command="{Binding Path=DataContext.BudgetItems.RemoveItemCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}">
+                                                    Command="{Binding Path=DataContext.MeasurementUnits.RemoveItemCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:MainView}}}">
                                                 Удалить запись
                                             </Button>
                                         </Grid>
@@ -834,11 +947,11 @@
             <Grid.Style>
                 <Style TargetType="{x:Type Grid}">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding Authorized}" Value="False">
+                        <DataTrigger Binding="{Binding Authorized}" Value="True">
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetProperty="(Grid.Opacity)" To="1.0" Duration="0:0:0.5" />
+                                        <DoubleAnimation BeginTime="0:0:3" Storyboard.TargetProperty="(Grid.Opacity)" To="0.0" Duration="0:0:0.5" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
@@ -846,7 +959,7 @@
                             <DataTrigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <DoubleAnimation BeginTime="0:0:3" Storyboard.TargetProperty="(Grid.Opacity)" To="0.0" Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetProperty="(Grid.Opacity)" To="1.0" Duration="0:0:0.5" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.ExitActions>
@@ -858,7 +971,6 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto" />
                 <RowDefinition Height="auto" />
-                <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
 
             <Grid.ColumnDefinitions>
@@ -866,11 +978,10 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock Margin="20,20,20,10" HorizontalAlignment="Center" FontSize="26" FontWeight="Bold">Программа «План/факт-анализ»</TextBlock>
-            <TextBlock Grid.Row="1" HorizontalAlignment="Center" FontSize="22" FontWeight="SemiBold">Авторизация</TextBlock>
 
-            <Grid Grid.Row="2" Margin="0,0,0,20">
+            <Grid Grid.Row="1" Margin="0,0,0,20">
                 <!--  Успешная авторизация  -->
-                <StackPanel VerticalAlignment="Center" Opacity="0.0">
+                <StackPanel Name="SuccessfulLogin" VerticalAlignment="Center" Opacity="0.0">
                     <StackPanel.Style>
                         <Style TargetType="{x:Type StackPanel}">
                             <Style.Triggers>
@@ -903,82 +1014,194 @@
                 </StackPanel>
 
                 <!--  Вход под зарегистрированным аккаунтом  -->
-                <Grid>
-                    <Grid.Style>
-                        <Style TargetType="{x:Type Grid}">
+                <StackPanel Name="Login" Visibility="Hidden">
+                    <StackPanel.Style>
+                        <Style TargetType="{x:Type StackPanel}">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Authorized}" Value="False">
-                                    <DataTrigger.EnterActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <BooleanAnimationUsingKeyFrames BeginTime="0:0:0.5" Storyboard.TargetProperty="(Grid.IsEnabled)" Duration="0:0:0.5">
-                                                    <DiscreteBooleanKeyFrame KeyTime="0:0:0.5" Value="True" />
-                                                </BooleanAnimationUsingKeyFrames>
-                                                <DoubleAnimation BeginTime="0:0:0.5" Storyboard.TargetProperty="(Grid.Opacity)" To="1.0" Duration="0:0:0.5" />
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </DataTrigger.EnterActions>
-
-                                    <DataTrigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <BooleanAnimationUsingKeyFrames Storyboard.TargetProperty="(Grid.IsEnabled)" Duration="0:0:0.5">
-                                                    <DiscreteBooleanKeyFrame KeyTime="0:0:0.5" Value="False" />
-                                                </BooleanAnimationUsingKeyFrames>
-                                                <DoubleAnimation Storyboard.TargetProperty="(Grid.Opacity)" To="0.0" Duration="0:0:0.5" />
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </DataTrigger.ExitActions>
+                                <DataTrigger Binding="{Binding Registration.Registered}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </Grid.Style>
+                    </StackPanel.Style>
 
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto" />
-                        <RowDefinition Height="20" />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
+                    <TextBlock HorizontalAlignment="Center" FontSize="22" FontWeight="SemiBold">Авторизация</TextBlock>
 
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
+                    <Grid>
+                        <Grid.Style>
+                            <Style TargetType="{x:Type Grid}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Authorized}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
 
-                    <Grid Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" TextBlock.FontSize="15">
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <BooleanAnimationUsingKeyFrames BeginTime="0:0:0.5" Storyboard.TargetProperty="(Grid.IsEnabled)" Duration="0:0:0.5">
+                                                        <DiscreteBooleanKeyFrame KeyTime="0:0:0.5" Value="True" />
+                                                    </BooleanAnimationUsingKeyFrames>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+
+                                        <DataTrigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <BooleanAnimationUsingKeyFrames Storyboard.TargetProperty="(Grid.IsEnabled)" Duration="0:0:0.5">
+                                                        <DiscreteBooleanKeyFrame KeyTime="0:0:0.5" Value="False" />
+                                                    </BooleanAnimationUsingKeyFrames>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
+
+                                    <DataTrigger Binding="{Binding Authorized}" Value="True">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="20" />
                             <RowDefinition Height="auto" />
                             <RowDefinition Height="20" />
                             <RowDefinition />
                         </Grid.RowDefinitions>
 
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="60" />
-                            <ColumnDefinition Width="10" />
-                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Style="{StaticResource FieldLabel}">Логин:</TextBlock>
-                        <TextBox Grid.Column="2" Style="{StaticResource Field}" Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}" />
+                        <Grid Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" TextBlock.FontSize="15">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="auto" />
+                            </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Пароль:</TextBlock>
-                        <PasswordBox Name="AuthPassBox" Grid.Row="2"
-                                     Grid.Column="2" Padding="1,0,1,1"
-                                     BorderThickness="0,0,0,1" PasswordChanged="PasswordBoxTextChanged" />
-                        <TextBox Name="AuthPassTextBox" Grid.Row="2"
-                                 Grid.Column="2"
-                                 Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
-                                 TextChanged="PasswordTextBoxChanged" Visibility="Collapsed" />
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="150" />
+                            </Grid.ColumnDefinitions>
 
-                        <Button Grid.Row="4" Grid.ColumnSpan="3"
-                                Width="140"
-                                Command="{Binding AuthorizeCommand}"
-                                TextBlock.FontSize="18">
-                            Войти
-                        </Button>
+                            <TextBlock Style="{StaticResource FieldLabel}">Логин:</TextBlock>
+                            <TextBox Grid.Column="2" Style="{StaticResource Field}" Text="{Binding Login, ValidatesOnDataErrors=true, NotifyOnValidationError=true, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Пароль:</TextBlock>
+                            <PasswordBox Name="LoginPassBox" Grid.Row="2"
+                                         Grid.Column="2" PasswordChanged="LoginPassBoxTextChanged"
+                                         Style="{StaticResource FieldPassword}"
+                                         Validation.ValidationAdornerSiteFor="{Binding ElementName=LoginPassTextBox}" />
+                            <TextBox Name="LoginPassTextBox" Grid.Row="2"
+                                     Grid.Column="2"
+                                     Text="{Binding Password, ValidatesOnDataErrors=true, NotifyOnValidationError=true, UpdateSourceTrigger=PropertyChanged}"
+                                     TextChanged="LoginPassTextBoxChanged" Visibility="Collapsed" />
+
+                            <Button Grid.Row="4" Grid.ColumnSpan="3"
+                                    Padding="10,5" HorizontalAlignment="Center"
+                                    Command="{Binding AuthorizeCommand}"
+                                    TextBlock.FontSize="18">
+                                Войти
+                            </Button>
+
+                            <TextBlock Grid.Row="6" Grid.ColumnSpan="3" TextAlignment="Center">
+                                Нет аккаунта?<LineBreak /><Hyperlink Click="RegisterLinkClicked">Зарегистрироваться</Hyperlink></TextBlock>
+                        </Grid>
                     </Grid>
-                </Grid>
+                </StackPanel>
+
+                <!--  Регистрация аккаунта  -->
+                <StackPanel Name="Registration" DataContext="{Binding Registration}">
+                    <StackPanel.Style>
+                        <Style TargetType="{x:Type StackPanel}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Registered}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <TextBlock HorizontalAlignment="Center" FontSize="22" FontWeight="SemiBold">Регистрация</TextBlock>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="20" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" TextBlock.FontSize="15">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="auto" />
+                            </Grid.RowDefinitions>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="150" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Style="{StaticResource FieldLabel}">Логин:</TextBlock>
+                            <TextBox Grid.Column="2" Style="{StaticResource Field}" Text="{Binding Login, ValidatesOnDataErrors=true, NotifyOnValidationError=true, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}">Пароль:</TextBlock>
+                            <PasswordBox Name="RegistrationPassBox" Grid.Row="2"
+                                         Grid.Column="2" PasswordChanged="RegistrationPassBoxTextChanged"
+                                         Style="{StaticResource FieldPassword}" />
+                            <TextBox Name="RegistrationPassTextBox" Grid.Row="2"
+                                     Grid.Column="2"
+                                     Text="{Binding Password, ValidatesOnDataErrors=true, NotifyOnValidationError=true, UpdateSourceTrigger=PropertyChanged}"
+                                     TextChanged="RegistrationPassTextBoxChanged"
+                                     Validation.ValidationAdornerSite="{Binding ElementName=RegistrationPassBox}"
+                                     Visibility="Collapsed" />
+
+                            <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}">Имя:</TextBlock>
+                            <TextBox Grid.Row="4" Grid.Column="2" Style="{StaticResource Field}" Text="{Binding Name, ValidatesOnDataErrors=true, NotifyOnValidationError=true, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}">Роль:</TextBlock>
+                            <ComboBox Grid.Row="6" Grid.Column="2"
+                                      ItemsSource="{Binding PossibleRoles}"
+                                      SelectedItem="{Binding Role, ValidatesOnDataErrors=true, NotifyOnValidationError=true, UpdateSourceTrigger=PropertyChanged}"
+                                      Style="{StaticResource FieldComboBox}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource DescriptionConverter}}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+
+                            <Button Grid.Row="8" Grid.ColumnSpan="3"
+                                    Padding="10,5" HorizontalAlignment="Center"
+                                    Command="{Binding RegisterCommand}"
+                                    TextBlock.FontSize="18">
+                                Зарегистрироваться
+                            </Button>
+
+                            <TextBlock Grid.Row="10" Grid.ColumnSpan="3" TextAlignment="Center">
+                                Есть аккаунт?<LineBreak /><Hyperlink Click="LoginLinkClicked">Авторизоваться</Hyperlink></TextBlock>
+                        </Grid>
+                    </Grid>
+                </StackPanel>
             </Grid>
 
             <Rectangle Grid.RowSpan="3" RadiusX="10"

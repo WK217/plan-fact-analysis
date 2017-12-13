@@ -29,5 +29,21 @@ namespace PlanFactAnalysis.ViewModel
                 }
             }
         }
+
+        protected override bool CanRemoveItem (object obj)
+        {
+            PlannedOperationViewModel currentItem = ItemsCollectionView.CurrentItem as PlannedOperationViewModel;
+
+            var actualOperations = from op in _context.FactRegistry.Items
+                                   where op.PlannedOperation == currentItem
+                                   select op;
+
+            return actualOperations.Count ( ) == 0;
+        }
+
+        public bool IsEnabled
+        {
+            get => _context.Authorization.Role == UserRole.Planner || _context.Authorization.Role == UserRole.Manager;
+        }
     }
 }

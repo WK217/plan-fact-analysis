@@ -12,10 +12,20 @@ namespace PlanFactAnalysis.Model
         /// </summary>
         public string Name { get; set; }
 
+        DateTime _date = DateTime.Today;
+
         /// <summary>
         /// Дата осуществления операции.
         /// </summary>
-        public DateTime Date { get; set; }
+        public DateTime Date
+        {
+            get => _date;
+            set
+            {
+                if (value >= PlannedOperation.BeginDate && value <= PlannedOperation.EndDate)
+                    _date = value;
+            }
+        }
 
         /// <summary>
         /// Статья бюджета.
@@ -70,10 +80,9 @@ namespace PlanFactAnalysis.Model
         public ActualOperation (string name, DateTime date, PlannedOperation plannedOperation, double value, double labourIntensity = 0)
             : base (value, labourIntensity)
         {
+            PlannedOperation = plannedOperation;
             Name = name;
             Date = date;
-
-            PlannedOperation = plannedOperation;
         }
     }
 }

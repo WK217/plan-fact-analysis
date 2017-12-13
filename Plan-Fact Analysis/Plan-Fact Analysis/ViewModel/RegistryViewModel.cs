@@ -12,10 +12,10 @@ namespace PlanFactAnalysis.ViewModel
         where T : ViewModelBase<M>
         where M : class, new()
     {
-        readonly IList<M> _modelItems;
-        readonly ObservableCollection<T> _viewModelItems = new ObservableCollection<T> ( );
+        readonly protected IList<M> _modelItems;
+        readonly protected ObservableCollection<T> _viewModelItems = new ObservableCollection<T> ( );
 
-        M _newItemModel;
+        protected M _newItemModel;
         public T NewItem { get; private set; }
 
         readonly RelayCommand _addItemCommand;
@@ -64,6 +64,35 @@ namespace PlanFactAnalysis.ViewModel
         protected virtual bool CanRemoveItem (object obj)
         {
             return true;
+        }
+
+        public void AddModel (M model)
+        {
+            if (!_modelItems.Contains(model))
+            {
+                _modelItems.Add (model);
+                _viewModelItems.Add ((T)Activator.CreateInstance (typeof (T), model, _context));
+            }
+        }
+
+        public virtual void Clear ( )
+        {
+            foreach (M item in _modelItems)
+            {
+                _modelItems.Remove (item);
+                _viewModelItems.Remove (GetViewModelFromModel (item));
+            }
+        }
+
+        public virtual void RefreshViewModelList ( )
+        {
+            _viewModelItems.Clear ( );
+
+            foreach (var item in _modelItems)
+            {
+                if (!_viewModelItems.Contains (GetViewModelFromModel (item)))
+                    _viewModelItems.Add ((T)Activator.CreateInstance (typeof (T), item, _context));
+            }
         }
 
         public T GetViewModelFromModel (M model) => _viewModelItems.FirstOrDefault (item => item.Equals (model));

@@ -125,7 +125,7 @@ namespace PlanFactAnalysis.ViewModel
             set
             {
                 _model.BeginDate = value;
-                RaisePropertyChanged (nameof (BeginDate));
+                RaisePropertyChanged (nameof (EndDate));
             }
         }
 
@@ -135,7 +135,7 @@ namespace PlanFactAnalysis.ViewModel
             set
             {
                 _model.EndDate = value;
-                RaisePropertyChanged (nameof (EndDate));
+                RaisePropertyChanged (nameof (BeginDate));
             }
         }
 
